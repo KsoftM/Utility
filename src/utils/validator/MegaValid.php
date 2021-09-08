@@ -46,6 +46,9 @@ class MegaValid
     public static function haveDataRender(mixed $data, MegRule $rules, array &$errors): bool
     {
         $have = $rules->getHaveDataRules();
+        $field = $rules->getField();
+
+        //TODO  THE FIELD MUST BE IMPLEMENTED
 
         if ($have == MegRule::REQUIRED_TYPE) {
             $output = isset($data) || !empty($data);
@@ -64,6 +67,9 @@ class MegaValid
     public static function dataTypeRender(mixed $data, MegRule $rules, array &$errors): bool
     {
         $type = $rules->getDataTypeRules();
+        $field = $rules->getField();
+
+        //TODO  THE FIELD MUST BE IMPLEMENTED
 
         switch ($type) {
             case MegRule::INT_TYPE:

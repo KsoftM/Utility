@@ -2,10 +2,101 @@
 
 namespace ksoftm\utils;
 
+use Exception;
+
 class EndeCorder
 {
-    protected const SEPARATOR = ' :: ';
-    private const SELF_TOKEN_KEY = ' sdo+jke9/3w==';
+
+    //<<----------->> aloud cipher and it's length <<----------->>//
+
+    public const CIPHER_AES_128_CTR = 'AES-128-CTR';
+    public const CIPHER_AES_256_CTR = 'AES-256-CTR';
+
+    protected const MAX_LENGTH_AES_128_CTR = 16;
+    protected const MAX_LENGTH_AES_256_CTR = 32;
+
+    //<<-----X----->> aloud cipher <<-----X----->>//
+
+
+    /**
+     * encryption key
+     *
+     * @var string
+     */
+    protected string $key;
+
+    /**
+     * cipher method for encryption
+     *
+     * @var string
+     */
+    protected string $cipher;
+
+
+    /**
+     * encryption class
+     *
+     * @param string $key length between 32 and 64
+     * @param string $cipher
+     */
+    protected function __construct(string $key, string $cipher)
+    {
+        if (self::checkValidCipher($key, $cipher)) {
+            $this->key = $key;
+            $this->cipher = $cipher;
+        } else {
+            throw new Exception("Invalid key and cipher.");
+        }
+    }
+
+    /**
+     * create new EndeCorder
+     *
+     * @param string $key
+     * @param [type] $cipher
+     *
+     * @return EndeCorder
+     */
+    public static function new(string $key, string $cipher = EndeCorder::CIPHER_AES_128_CTR): EndeCorder
+    {
+        return new EndeCorder($key, $cipher);
+    }
+
+    /**
+     * check the key and cipher is valid
+     *
+     * @param string $key
+     * @param string $cipher
+     *
+     * @return boolean
+     */
+    public static function checkValidCipher(string $key, string $cipher): bool
+    {
+        $bitCount = mb_strlen($key, '8bit');
+
+        return ($bitCount == EndeCorder::MAX_LENGTH_AES_128_CTR &&
+            $cipher === EndeCorder::CIPHER_AES_128_CTR) ||
+            ($bitCount == EndeCorder::MAX_LENGTH_AES_256_CTR &&
+                $cipher === EndeCorder::CIPHER_AES_256_CTR);
+    }
+
+
+    //<<----------->> generate unique key <<----------->>//
+
+    public static function generateUniqueKey(
+        string $cipher = EndeCorder::CIPHER_AES_128_CTR
+    ): string {
+        return openssl_random_pseudo_bytes(
+            $cipher === EndeCorder::CIPHER_AES_128_CTR ?
+                EndeCorder::MAX_LENGTH_AES_128_CTR :
+                EndeCorder::MAX_LENGTH_AES_256_CTR
+        );
+    }
+
+    //<<-----X----->> generate unique key <<-----X----->>//
+
+
+    //<<----------->> encryption and decryption <<----------->>//
 
     /**
      * encrypt plane text into chipper text
@@ -16,31 +107,31 @@ class EndeCorder
      *
      * @return string
      */
-    public static function SSLEncryption(
-        string $data,
-        string $key,
-        string $algorithm = 'AES-128-CTR'
-    ): string {
-
-        // decode tha key into base64 format
-        $encryptKey = base64_decode($key);
-
+    public function SSLEncrypt(mixed $data, bool $serialization = false): string
+    {
         // create the unique in for specified algorithm
-        $iv = bin2hex(random_bytes(
-            openssl_cipher_iv_length($algorithm) / 2
+        $iv = bin2hex(openssl_random_pseudo_bytes(
+            openssl_cipher_iv_length($this->cipher) / 2
         ));
 
         // create a raw encrypted data
-        $encryptData =  openssl_encrypt(
-            $data,
-            $algorithm,
-            $encryptKey,
+        $data =  openssl_encrypt(
+            $serialization ? serialize($data) : $data,
+            $this->cipher,
+            $this->key,
             0,
             $iv
         );
 
-        // join the raw [encryptedData] and [iv] and then format it into base64
-        return base64_encode($encryptData . EndeCorder::SEPARATOR . $iv);
+        $iv = base64_encode($iv);
+
+        $hash = json_encode(compact('iv', 'data'));
+
+        if ($hash == false) {
+            throw new Exception('SSL Encryption failed.');
+        }
+
+        return base64_encode($hash);
     }
 
     /**
@@ -52,26 +143,50 @@ class EndeCorder
      *
      * @return string
      */
-    public static function SSLDecryption(
-        string $encryptData,
-        string $key,
-        string $algorithm = 'AES-128-CTR'
+    public function SSLDecrypt(
+        string $data,
+        bool $serialization = false
     ): string {
-        // decode tha key into base64 format
-        $encryptKey = base64_decode($key);
 
         // separate the [encryptedData] and [iv] from base64 formatted encrypted data
-        [$encryptData, $iv] = explode(EndeCorder::SEPARATOR, base64_decode($encryptData), 2);
+        ['iv' => $iv, 'data' => $data] = json_decode(base64_decode($data), true);
 
         // decrypt the data
-        return openssl_decrypt(
-            $encryptData,
-            $algorithm,
-            $encryptKey,
+        $data = openssl_decrypt(
+            $data,
+            $this->cipher,
+            $this->key,
             0,
-            $iv
+            base64_decode($iv)
         );
+
+        return $serialization ? unserialize($data) : $data;
     }
+
+    //<<-----X----->> encryption and decryption <<-----X----->>//
+
+
+
+    //<<----------->> big hashing with key <<----------->>//
+
+    /**
+     * make a big hash data wih key
+     *
+     * @param string $data
+     * @param boolean $binary
+     * @param string $method
+     *
+     * @return string
+     */
+    public function BigHash(string $data, string $key, bool $binary = false, string $method = 'sha256'): string
+    {
+        return hash_hmac($method, $data, $key, $binary);
+    }
+
+    //<<-----X----->> big hashing with key <<-----X----->>//
+
+
+    //<<----------->> token hashing and token validation <<----------->>//
 
     /**
      * make a validation token
@@ -83,21 +198,21 @@ class EndeCorder
      * @return string
      */
     public static function Token(
-        string $nameOfTheToken,
-        string $uniqueKey = 'ksoftm',
+        string $name,
+        string $uniqueKey,
         int|false $validTimeInSecond = false
     ): string {
         // check the time validation is available
         // make the time validation if it is available
         if ($validTimeInSecond != false) {
-            $nameOfTheToken .= EndeCorder::SEPARATOR . (time() + $validTimeInSecond);
+            $time = base64_encode((time() + $validTimeInSecond));
+            $name = json_encode(compact('name', 'time'), JSON_UNESCAPED_SLASHES);
+        } else {
+            $name = json_encode(compact('name'), JSON_UNESCAPED_SLASHES);
         }
 
         // return the encrypted key
-        return EndeCorder::SSLEncryption(
-            $nameOfTheToken,
-            base64_encode($uniqueKey . self::SELF_TOKEN_KEY)
-        );
+        return EndeCorder::new($uniqueKey)->SSLEncrypt($name);
     }
 
     /**
@@ -110,22 +225,25 @@ class EndeCorder
      * @return TokenResult
      */
     public static function TokenValidate(
+        string $name,
         string $token,
-        string $nameOfTheToken,
-        string $uniqueKey = 'ksoftm'
+        string $uniqueKey
     ): TokenResult {
         // decrypt the data and check it is a valid token
-        $token = EndeCorder::SSLDecryption(
-            $token,
-            base64_encode($uniqueKey . self::SELF_TOKEN_KEY)
-        );
+        $token = EndeCorder::new($uniqueKey)->SSLDecrypt($token);
 
         if (!empty($token)) {
             // separate the name and time
-            [$name, $time] = explode(EndeCorder::SEPARATOR, $token, 2) + [null, null];
+            $token = (array) json_decode($token);
 
-            if (!empty($name) && $name === $nameOfTheToken) {
+            [
+                'name' => $name,
+                'time' => $time
+            ] = $token + ['name' => null, 'time' => null];
+
+            if (!empty($name) && $name === $name) {
                 if (!empty($time)) {
+                    $time = base64_decode($time);
                     // time validation check
                     if (($time - time()) > 0) {
                         // valid token with time validation
@@ -147,19 +265,10 @@ class EndeCorder
         return new TokenResult(false, 'Unknown errors founded!');
     }
 
-    /**
-     * make a big hash key
-     *
-     * @param string $data
-     * @param boolean $binary
-     * @param string $method
-     *
-     * @return string
-     */
-    function BigHash(string $data, bool $binary = false, string $method = 'sha512'): string
-    {
-        return hash($method, $data, $binary);
-    }
+    //<<-----X----->> token hashing and token validation <<-----X----->>//
+
+
+    //<<----------->> password hashing methods <<----------->>//
 
     /**
      * create a hash password.
@@ -169,7 +278,7 @@ class EndeCorder
      *
      * @return string
      */
-    function HashedPassword(string $password, int $cost = 8): string
+    public function HashedPassword(string $password, int $cost = 8): string
     {
         return password_hash($password, PASSWORD_DEFAULT, ['cost' => $cost]);
     }
@@ -182,8 +291,10 @@ class EndeCorder
      *
      * @return boolean
      */
-    function VerifyHashedPassword(string $password, string $hash): bool
+    public function VerifyHashedPassword(string $password, string $hash): bool
     {
         return password_verify($password, $hash);
     }
+
+    //<<-----X----->> password hashing methods <<-----X----->>//
 }
