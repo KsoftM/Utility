@@ -51,20 +51,26 @@ class BuildMixer extends Mixer
                     true
                 );
 
-                $parentFile = self::renderVar(
-                    parent::var($parentFile),
-                    $parentFile,
-                    $compactData
-                );
+                if (!empty($compactData)) {
+                    $parentFile = self::renderVar(
+                        parent::var($parentFile),
+                        $parentFile,
+                        $compactData
+                    );
+                }
 
-                $lang = parent::lang($parentFile);
+                if (!empty($languageData)) {
+                    $lang = parent::lang($parentFile);
 
-                $parentFile = self::renderLang(
-                    $lang[0],
-                    $lang[1],
-                    $parentFile,
-                    $languageData
-                );
+                    if (is_array($lang)) {
+                        $parentFile = self::renderLang(
+                            $lang[0],
+                            $lang[1],
+                            $parentFile,
+                            $languageData
+                        );
+                    }
+                }
             }
             $childExtend = $parentFile;
         }
