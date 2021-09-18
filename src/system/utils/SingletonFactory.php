@@ -1,11 +1,11 @@
 <?php
 
-namespace ksoftm\utils;
+namespace ksoftm\system\utils;
 
 /**
- * singleton instance base class
+ * SingletonFactory instance base class
  */
-abstract class Singleton
+abstract class SingletonFactory
 {
     /**
      * Class constructor.
@@ -13,7 +13,7 @@ abstract class Singleton
     protected abstract function __construct();
 
     /**
-     * create the singleton instance
+     * create the SingletonFactory instance
      *
      * @param mixed $base
      * @param mixed $class
@@ -30,7 +30,7 @@ abstract class Singleton
     }
 
     /**
-     * get the singleton instance
+     * get the SingletonFactory instance
      *
      * @return self
      */

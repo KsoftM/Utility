@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils\database;
+namespace ksoftm\system\utils\database;
 
 
 abstract class Migration

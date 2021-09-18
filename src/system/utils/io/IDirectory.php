@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils\io;
+namespace ksoftm\system\utils\io;
 
 
 interface IDirectory
@@ -15,21 +15,21 @@ interface IDirectory
     function isValidDirectory(bool $createIfNotExist = false): bool;
 
     /**
-     * get the files in a given path
+     * get all the files in a given path
      *
      * @return array
      */
-    function getDirectoryFileNames(bool $getSubFoldersFile = false): array;
+    function getDirectoryFiles(bool $getSubFoldersFile = false): array;
 
     /**
-     * get the directories in a give path
+     * get all the directories and files in a give path
      *
      * @return array
      */
     function getDirectories(bool $getSubFolders = false): array;
 
     /**
-     * get the directory path only in a given path
+     * get all the directory path only in a given path
      *
      * @param boolean $getSubFolders
      *

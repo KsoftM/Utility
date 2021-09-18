@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils\validator;
+namespace ksoftm\system\utils\validator;
 
 use DateTime;
 use Exception;
@@ -16,13 +16,20 @@ class MegaValid
      *
      * @return bool
      */
-    public static function validate(array $megaValid, ?array &$errors): bool
+    public static function validate(array $megaValid, array &$errors = null): bool
     {
         $errors = !empty($errors) ?: [];
         foreach ($megaValid as $data) {
 
-            $megRule = $data[1];
-            $data = $data[0];
+            if (is_array($data) && count($data) == 2) {
+                $megRule = $data[1];
+                $data = $data[0];
+            } else if ($data instanceof MegRule) {
+                $megRule = $data;
+                $data = $megRule->getField();
+            } else {
+                $megRule = false;
+            }
 
             if ($megRule instanceof MegRule) {
                 $have  = self::haveDataRender($data, $megRule, $errors);
@@ -48,12 +55,10 @@ class MegaValid
         $have = $rules->getHaveDataRules();
         $field = $rules->getField();
 
-        //TODO  THE FIELD MUST BE IMPLEMENTED
-
         if ($have == MegRule::REQUIRED_TYPE) {
             $output = isset($data) || !empty($data);
             if ($output == false) {
-                $errors[MegRule::REQUIRED_TYPE] = 'This is a required field.';
+                $errors[MegRule::REQUIRED_TYPE] = "$field field must be required.";
             }
         } elseif ($have == MegRule::NULLABLE_TYPE) {
             $output = true;
@@ -69,37 +74,32 @@ class MegaValid
         $type = $rules->getDataTypeRules();
         $field = $rules->getField();
 
-        //TODO  THE FIELD MUST BE IMPLEMENTED
-
         switch ($type) {
             case MegRule::INT_TYPE:
-                $output  = filter_var($data, FILTER_SANITIZE_NUMBER_INT) && filter_var($data, FILTER_VALIDATE_INT);
+                $output  = filter_var($data, FILTER_SANITIZE_NUMBER_INT) &&
+                    filter_var($data, FILTER_VALIDATE_INT);
                 if ($output == false) {
-                    $errors[MegRule::INT_TYPE] = 'This field must be a valid integer value.';
+                    $errors[MegRule::INT_TYPE] = "$field field must be a valid integer value.";
                 }
                 break;
             case MegRule::STRING_TYPE:
-                $output  = filter_var($data, FILTER_SANITIZE_STRING) && filter_var($data, FILTER_DEFAULT);
+                $output  = filter_var($data, FILTER_SANITIZE_STRING) &&
+                    filter_var($data, FILTER_DEFAULT);
                 if ($output == false) {
-                    $errors[MegRule::STRING_TYPE] = 'This field must be a valid string value.';
+                    $errors[MegRule::STRING_TYPE] = "$field field must be a valid string value.";
                 }
                 break;
             case MegRule::BOOLEAN_TYPE:
                 $output  = filter_var($data, FILTER_VALIDATE_BOOL);
                 if ($output == false) {
-                    $errors[MegRule::BOOLEAN_TYPE] = 'This field must be a valid boolean value';
+                    $errors[MegRule::BOOLEAN_TYPE] = "$field field must be a valid boolean value";
                 }
                 break;
             case MegRule::FLOAT_TYPE:
-                $output  = filter_var($data, FILTER_SANITIZE_NUMBER_FLOAT) && filter_var($data, FILTER_VALIDATE_FLOAT);
+                $output  = filter_var($data, FILTER_SANITIZE_NUMBER_FLOAT) &&
+                    filter_var($data, FILTER_VALIDATE_FLOAT);
                 if ($output == false) {
-                    $errors[MegRule::FLOAT_TYPE] = 'This field must be a valid float value.';
-                }
-                break;
-            case MegRule::EMAIL_TYPE:
-                $output  = filter_var($data, FILTER_SANITIZE_EMAIL) && filter_var($data, FILTER_VALIDATE_EMAIL);
-                if ($output == false) {
-                    $errors[MegRule::EMAIL_TYPE] = 'This field must be a valid email address.';
+                    $errors[MegRule::FLOAT_TYPE] = "$field field must be a valid float value.";
                 }
                 break;
 
@@ -120,7 +120,7 @@ class MegaValid
             foreach ($depend as $key => $value) {
                 if (
                     $type == MegRule::INT_TYPE || $type == MegRule::FLOAT_TYPE ||
-                    $type == MegRule::STRING_TYPE || $type == MegRule::EMAIL_TYPE
+                    $type == MegRule::STRING_TYPE
                 ) {
                     $currentLength  = is_string($data) ? strlen($data) : $data;
                 } else {
@@ -144,7 +144,7 @@ class MegaValid
                     $output = ($value >= $currentLength);
 
                     if ($output == false) {
-
+                        $field = ucfirst($field);
                         $errors[MegRule::MIN_TYPE] =
                             $type == MegRule::INT_TYPE || $type == MegRule::FLOAT_TYPE
                             ? "The maximum amount of the $field field must be $value."
@@ -157,7 +157,7 @@ class MegaValid
                         $output = in_array($data, $value);
 
                         if ($output == false) {
-                            $errors[MegRule::SET_TYPE] = "This $field field must be contain '" . implode("' or '", $value) . "'.";
+                            $errors[MegRule::SET_TYPE] = "$field field must be in ['" . implode("', '", $value) . "'] set.";
                         }
                     }
                 } elseif ($key == MegRule::UNSIGNED_TYPE) {
@@ -169,7 +169,7 @@ class MegaValid
                     $output = ($data >= 0);
 
                     if ($output == false) {
-                        $errors[MegRule::UNSIGNED_TYPE] = "This $field field must be unsigned integer value.";
+                        $errors[MegRule::UNSIGNED_TYPE] = "$field field must be unsigned integer value.";
                     }
                 } elseif ($key == MegRule::PASSWORD_TYPE) {
 
@@ -182,7 +182,7 @@ class MegaValid
                     $output = ($reg);
 
                     if ($output == false) {
-                        $errors[MegRule::PASSWORD_TYPE] = "The password $field field must be contain valid characters.";
+                        $errors[MegRule::PASSWORD_TYPE] = "$field field must be contain valid characters.";
                     }
                 } elseif ($key == MegRule::USER_NAME_TYPE) {
 
@@ -195,7 +195,7 @@ class MegaValid
                     $output = ($reg);
 
                     if ($output == false) {
-                        $errors[MegRule::USER_NAME_TYPE] = "This $field field must only be contain letters(cap && small), numbers and underscore value.";
+                        $errors[MegRule::USER_NAME_TYPE] = "$field field must only be contain letters, numbers and underscore and also the first letter must not be number.";
                     }
                 } elseif ($key == MegRule::SLUG_TYPE) {
 
@@ -208,7 +208,7 @@ class MegaValid
                     $output = ($reg);
 
                     if ($output == false) {
-                        $errors[MegRule::SLUG_TYPE] = "This $field field must be unsigned and also must be a valid integer value.";
+                        $errors[MegRule::SLUG_TYPE] = "$field field must be unsigned and also must be a valid integer value.";
                     }
                 } elseif (
                     $key == MegRule::DATE_TYPE ||
@@ -221,7 +221,7 @@ class MegaValid
                     $output = DateTime::createFromFormat($value, $data);
 
                     if ($output == false) {
-                        $errors[MegRule::DATETIME_TYPE] = "This $field field must be in valid date format.";
+                        $errors[MegRule::DATETIME_TYPE] = "$field field must be in a valid format.";
                     }
                 } elseif ($key == MegRule::MATCH_TYPE) {
 
@@ -236,6 +236,12 @@ class MegaValid
                         $errors[MegRule::MATCH_TYPE] = ($prop == false)
                             ? "The fields must be match."
                             : "The $prop field must be match.";
+                    }
+                } elseif ($key == MegRule::EMAIL_TYPE) {
+                    $output  = filter_var($data, FILTER_SANITIZE_EMAIL) &&
+                        filter_var($data, FILTER_VALIDATE_EMAIL);
+                    if ($output == false) {
+                        $errors[MegRule::EMAIL_TYPE] = "$field field must be a valid address.";
                     }
                 } else {
                     $output = false;

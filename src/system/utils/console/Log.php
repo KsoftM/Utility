@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils\console;
+namespace ksoftm\system\utils\console;
 
 
 class Log

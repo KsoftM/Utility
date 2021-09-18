@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils\html;
+namespace ksoftm\system\utils\html;
 
 
 abstract class Mixer

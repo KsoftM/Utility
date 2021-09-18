@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils;
+namespace ksoftm\system\utils;
 
 use Exception;
 
@@ -127,7 +127,7 @@ class EndeCorder
 
         $hash = json_encode(compact('iv', 'data'));
 
-        if ($hash == false) {
+        if ($hash == false || $data == false) {
             throw new Exception('SSL Encryption failed.');
         }
 
@@ -160,6 +160,10 @@ class EndeCorder
             base64_decode($iv)
         );
 
+        if ($data == false) {
+            throw new Exception('SSL Decryption failed.');
+        }
+
         return $serialization ? unserialize($data) : $data;
     }
 
@@ -178,7 +182,7 @@ class EndeCorder
      *
      * @return string
      */
-    public function BigHash(string $data, string $key, bool $binary = false, string $method = 'sha256'): string
+    public static function BigHash(string $data, string $key, bool $binary = false, string $method = 'sha256'): string
     {
         return hash_hmac($method, $data, $key, $binary);
     }
@@ -236,6 +240,7 @@ class EndeCorder
             // separate the name and time
             $token = (array) json_decode($token);
 
+            // to reduce the null indexing exception
             [
                 'name' => $name,
                 'time' => $time

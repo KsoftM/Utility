@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils\validator;
+namespace ksoftm\system\utils\validator;
 
 /**
  * MegaValid rule class.
@@ -26,7 +26,6 @@ class MegRule
     public const STRING_TYPE = 201;
     public const BOOLEAN_TYPE = 202;
     public const FLOAT_TYPE = 203;
-    public const EMAIL_TYPE = 204;
 
     //<<-----X----->> set fo datatype <<-----X----->>//
 
@@ -42,9 +41,10 @@ class MegRule
     public const MIN_TYPE = 307;
     public const MAX_TYPE = 308;
     public const SET_TYPE = 309;
-    public const USER_NAME_TYPE = 309;
-    public const SLUG_TYPE = 310;
+    public const USER_NAME_TYPE = 310;
+    public const SLUG_TYPE = 311;
     public const PASSWORD_TYPE = 312;
+    public const EMAIL_TYPE = 313;
 
     //<<-----X----->> set of depend argument type <<-----X----->>//
 
@@ -62,7 +62,8 @@ class MegRule
      */
     public function __construct(string $fieldName = null)
     {
-        $this->fieldName = $fieldName;
+        // $this->fieldName = strtolower($fieldName);
+        $this->fieldName = ucfirst($fieldName);
         $this->nullable()->string();
     }
 
@@ -96,9 +97,9 @@ class MegRule
      *
      * @return MegRule
      */
-    public static function new(string $fieldName = null): MegRule
+    public static function new(string $displayName = null): MegRule
     {
-        return new MegRule($fieldName);
+        return new MegRule($displayName);
     }
 
     public function required(): MegRule
@@ -144,7 +145,9 @@ class MegRule
 
     public function email(): MegRule
     {
-        $this->args[MegRule::DATATYPE_ARGS_TYPE] = $this->args[MegRule::DATATYPE_ARGS_TYPE] ?? MegRule::EMAIL_TYPE;
+        $this->args[MegRule::DEPEND_ARGS_TYPE][MegRule::EMAIL_TYPE] =
+            $this->args[MegRule::DEPEND_ARGS_TYPE][MegRule::EMAIL_TYPE]
+            ?? MegRule::EMAIL_TYPE;
 
         return $this;
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils;
+namespace ksoftm\system\utils;
 
 
 class FormMaker

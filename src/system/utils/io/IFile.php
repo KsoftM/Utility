@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\utils\io;
+namespace ksoftm\system\utils\io;
 
 
 interface IFile

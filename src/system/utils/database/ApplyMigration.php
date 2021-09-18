@@ -1,8 +1,8 @@
 <?php
 
-namespace ksoftm\utils\database;
+namespace ksoftm\system\utils\database;
 
-use ksoftm\utils\io\FileManager;
+use ksoftm\system\utils\io\FileManager;
 
 class ApplyMigration
 {

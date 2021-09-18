@@ -1,8 +1,8 @@
 <?php
 
-namespace ksoftm\utils\html;
+namespace ksoftm\system\utils\html;
 
-use ksoftm\utils\io\FileManager;
+use ksoftm\system\utils\io\FileManager;
 
 class BuildMixer extends Mixer
 {
