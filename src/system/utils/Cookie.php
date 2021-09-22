@@ -7,7 +7,7 @@ class Cookie
     protected string $encryptKey;
     protected string $name;
     protected mixed $value;
-    protected int $minutes = 10;
+    protected int $timestamp = 3600;
     protected string $path = '/';
     protected string $domain = '';
     protected bool $secure = true;
@@ -25,7 +25,7 @@ class Cookie
     protected function __construct(
         string $name,
         mixed $value,
-        int $minutes = 10,
+        int $timestamp,
         string $path = '/',
         string $domain = '',
         bool $secure = true,
@@ -33,7 +33,7 @@ class Cookie
     ) {
         $this->name = $name;
         $this->value = $value;
-        $this->addMinutes($minutes);
+        $this->timestamp = $timestamp;
         $this->path = $path;
         $this->domain = $domain;
         $this->secure = $secure;
@@ -43,7 +43,7 @@ class Cookie
     public static function make(
         string $name,
         mixed $value = '',
-        int $minutes = 10,
+        int $timestamp = 3600,
         string $path = '/',
         string $domain = '',
         bool $secure = true,
@@ -53,7 +53,7 @@ class Cookie
         return new Cookie(
             $name,
             $value,
-            $minutes,
+            $timestamp,
             $path,
             $domain,
             $secure,
@@ -71,27 +71,18 @@ class Cookie
         return $this;
     }
 
-    // add more minutes for the cookie
-    public function addMinutes(int $minutes): Cookie
+    // getter and setter for the encrypted key
+    public function EncryptKey(string $key = null): string
     {
-        $this->minutes = time() + (60 * $minutes);
-        return $this;
-    }
-
-    // get the encrypted key
-    public function getEncryptKey(): string
-    {
+        if (!empty($key)) {
+            $this->encryptKey = $key;
+        }
         return $this->encryptKey;
     }
 
-    // this is a fixed hashing method
-    // never reload the hash for a set of key & value => need to fix
-    //TODO encryption bug must be fixed
-    public function encrypted(): Cookie|false
+    public function encrypt(string $key): Cookie|false
     {
-        $this->encryptKey = EndeCorder::generateUniqueKey();
-
-        $this->value = base64_encode(EndeCorder::new($this->encryptKey)->SSLEncrypt($this->value));
+        $this->value = EndeCorder::new($this->EncryptKey($key))->SSLEncrypt($this->value);
 
         return $this;
     }
@@ -103,12 +94,17 @@ class Cookie
         return $this;
     }
 
+    /**
+     * start the cookie
+     *
+     * @return Cookie|false
+     */
     public function start(): Cookie|false
     {
         setcookie(
             $this->name,
             $this->value,
-            $this->minutes,
+            $this->timestamp,
             $this->path,
             $this->domain,
             $this->secure,
@@ -117,12 +113,17 @@ class Cookie
         return $this;
     }
 
-    public function startWidthTime(float $minutes = 10): Cookie
+    public function startWidthTime(float $timestamp = 3600): Cookie
     {
-        $this->addMinutes($minutes);
+        $this->timestamp = $timestamp;
         return $this->start();
     }
 
+    /**
+     * remove the cookie in the browser
+     *
+     * @return Cookie|false
+     */
     public function end(): Cookie|false
     {
         if (!empty($this->name))
@@ -131,19 +132,34 @@ class Cookie
         return $this;
     }
 
-    //TODO DECRYPTION BUG MUST BE FIXED
-    public function get(string $name, string $default = ''): mixed
+    /**
+     * get the named cookie, return $default if the cookie is not exist
+     *
+     * @param string $default
+     *
+     * @return mixed
+     */
+    public function get(string $default = ''): mixed
     {
-        $this->value = filter_input(INPUT_COOKIE, $name, FILTER_SANITIZE_SPECIAL_CHARS);
-        // $this->value = base64_decode(filter_var($_COOKIE[$name], FILTER_SANITIZE_STRING));
+        $this->value = filter_input(INPUT_COOKIE, $this->name, FILTER_SANITIZE_SPECIAL_CHARS);
 
-        echo '<pre>';
-        var_dump('get : ' . $this->value);
-        echo '</pre>';
-        // exit;
+        return $this->value ?? $default;
+    }
+
+    /**
+     * get the encrypted cookie and decrypt that.
+     *
+     * @param string $key
+     * @param string $default
+     *
+     * @return mixed
+     */
+    public function getEncrypted(string $key, string $default = ''): mixed
+    {
+        $this->get();
 
         if (isset($this->value)) {
-            $this->value = EndeCorder::new($this->encryptKey)->SSLDecrypt($this->value);
+            $this->value = EndeCorder::new($this->EncryptKey($key))->SSLDecrypt($this->value);
             return $this->value ?? $default;
         }
 

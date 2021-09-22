@@ -12,6 +12,7 @@ class FileManager implements IDirectory, IFile
         ".",
         "..",
         ".gitignore",
+        ".git",
         ".htaccess",
     ];
 
@@ -130,7 +131,11 @@ class FileManager implements IDirectory, IFile
     public function isValidDirectory(bool $createIfNotExist = false): bool
     {
         $dir = pathinfo($this->path, PATHINFO_DIRNAME);
-        is_dir($dir) ?: mkdir($dir, recursive: true);
+
+        if ($createIfNotExist) {
+            is_dir($dir) ?: mkdir($dir, recursive: true);
+        }
+
         return is_dir($dir);
     }
 
@@ -183,7 +188,7 @@ class FileManager implements IDirectory, IFile
 
     private function openFilesInAFolder($path, bool $getSubFoldersFile = false): array
     {
-        $files[] = new FileManager($path);
+        $files = [];
 
         if (false !== ($handle = opendir($path))) {
             while (false !== ($file = readdir($handle))) {

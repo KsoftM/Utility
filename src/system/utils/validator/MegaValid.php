@@ -24,9 +24,6 @@ class MegaValid
             if (is_array($data) && count($data) == 2) {
                 $megRule = $data[1];
                 $data = $data[0];
-            } else if ($data instanceof MegRule) {
-                $megRule = $data;
-                $data = $megRule->getField();
             } else {
                 $megRule = false;
             }

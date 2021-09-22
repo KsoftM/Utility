@@ -42,7 +42,7 @@ class EndeCorder
     protected function __construct(string $key, string $cipher)
     {
         if (self::checkValidCipher($key, $cipher)) {
-            $this->key = $key;
+            $this->key = base64_decode($key);
             $this->cipher = $cipher;
         } else {
             throw new Exception("Invalid key and cipher.");
@@ -72,7 +72,7 @@ class EndeCorder
      */
     public static function checkValidCipher(string $key, string $cipher): bool
     {
-        $bitCount = mb_strlen($key, '8bit');
+        $bitCount = mb_strlen(base64_decode($key), '8bit');
 
         return ($bitCount == EndeCorder::MAX_LENGTH_AES_128_CTR &&
             $cipher === EndeCorder::CIPHER_AES_128_CTR) ||
@@ -83,13 +83,22 @@ class EndeCorder
 
     //<<----------->> generate unique key <<----------->>//
 
+    /**
+     * this key is for encryption and validation and other class if the class use this encryption
+     *
+     * @param string $cipher
+     *
+     * @return string
+     */
     public static function generateUniqueKey(
         string $cipher = EndeCorder::CIPHER_AES_128_CTR
     ): string {
-        return openssl_random_pseudo_bytes(
-            $cipher === EndeCorder::CIPHER_AES_128_CTR ?
-                EndeCorder::MAX_LENGTH_AES_128_CTR :
-                EndeCorder::MAX_LENGTH_AES_256_CTR
+        return base64_encode(
+            openssl_random_pseudo_bytes(
+                $cipher === EndeCorder::CIPHER_AES_128_CTR ?
+                    EndeCorder::MAX_LENGTH_AES_128_CTR :
+                    EndeCorder::MAX_LENGTH_AES_256_CTR
+            )
         );
     }
 
@@ -110,9 +119,7 @@ class EndeCorder
     public function SSLEncrypt(mixed $data, bool $serialization = false): string
     {
         // create the unique in for specified algorithm
-        $iv = bin2hex(openssl_random_pseudo_bytes(
-            openssl_cipher_iv_length($this->cipher) / 2
-        ));
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->cipher));
 
         // create a raw encrypted data
         $data =  openssl_encrypt(
@@ -125,6 +132,7 @@ class EndeCorder
 
         $iv = base64_encode($iv);
 
+        // compact will create a associative array
         $hash = json_encode(compact('iv', 'data'));
 
         if ($hash == false || $data == false) {
@@ -147,7 +155,6 @@ class EndeCorder
         string $data,
         bool $serialization = false
     ): string {
-
         // separate the [encryptedData] and [iv] from base64 formatted encrypted data
         ['iv' => $iv, 'data' => $data] = json_decode(base64_decode($data), true);
 
@@ -204,12 +211,12 @@ class EndeCorder
     public static function Token(
         string $name,
         string $uniqueKey,
-        int|false $validTimeInSecond = false
+        int|false $timestamp = false
     ): string {
         // check the time validation is available
         // make the time validation if it is available
-        if ($validTimeInSecond != false) {
-            $time = base64_encode((time() + $validTimeInSecond));
+        if ($timestamp != false) {
+            $time = base64_encode(($timestamp));
             $name = json_encode(compact('name', 'time'), JSON_UNESCAPED_SLASHES);
         } else {
             $name = json_encode(compact('name'), JSON_UNESCAPED_SLASHES);
@@ -238,7 +245,7 @@ class EndeCorder
 
         if (!empty($token)) {
             // separate the name and time
-            $token = (array) json_decode($token);
+            $token = (array) json_decode($token, true);
 
             // to reduce the null indexing exception
             [

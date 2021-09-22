@@ -10,7 +10,9 @@ abstract class SingletonFactory
     /**
      * Class constructor.
      */
-    protected abstract function __construct();
+    protected function __construct()
+    {
+    }
 
     /**
      * create the SingletonFactory instance

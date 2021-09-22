@@ -17,44 +17,63 @@ class Session
     /**
      * Class constructor.
      */
-    protected function __construct($minutes, $path, $domain, $secure, $httpOnly)
+    protected function __construct($timestamp, $path, $domain, $secure, $httpOnly)
     {
         if (session_status() != PHP_SESSION_ACTIVE) {
-            session_set_cookie_params(60 * $minutes, $path, $domain, $secure, $httpOnly);
+            session_set_cookie_params($timestamp, $path, $domain, $secure, $httpOnly);
             session_start();
         }
     }
 
     public static function new(
-        int $minutes = 0,
+        int $timestamp = 0,
         string $path = '/',
         string $domain = 'localhost',
         bool $secure = true,
         bool $httpOnly = true
     ): Session {
-        return new Session($minutes, $path, $domain, $secure, $httpOnly);
+        return new Session($timestamp, $path, $domain, $secure, $httpOnly);
     }
 
-    public static function flash(string $tag, string $message, $minutes = 0)
-    {
-        Session::new($minutes);
+    public static function flash(
+        string $id,
+        string $message,
+        string $tag = null,
+        int $timestamp = 0
+    ) {
+        Session::new($timestamp);
         session_regenerate_id(true);
-        $_SESSION[Session::KEY_OF_SESSION][$tag][] = $message;
-    }
-
-    public static function remove(string $tag)
-    {
-        session_regenerate_id(true);
-        if (isset($_SESSION[Session::KEY_OF_SESSION][$tag])) {
-            unset($_SESSION[Session::KEY_OF_SESSION][$tag]);
+        if (!empty($tag)) {
+            $_SESSION[Session::KEY_OF_SESSION][$id][$tag] = $message;
+        } else {
+            $_SESSION[Session::KEY_OF_SESSION][$id][] = $message;
         }
     }
 
-    public static function removeOnce(string $tag, mixed $key)
+    public static function have(string $id, string $tag = null): bool
+    {
+        if (!empty($tag) && !empty($_SESSION[Session::KEY_OF_SESSION][$id][$tag])) {
+            $out = true;
+        } elseif (empty($tag) && !empty($_SESSION[Session::KEY_OF_SESSION][$id])) {
+            $out = true;
+        }
+        return $out ?? false;
+    }
+
+    public static function remove(string $id)
     {
         session_regenerate_id(true);
-        if (isset($_SESSION[Session::KEY_OF_SESSION][$tag][$key])) {
-            unset($_SESSION[Session::KEY_OF_SESSION][$tag][$key]);
+        if (self::have($id)) {
+            unset($_SESSION[Session::KEY_OF_SESSION][$id]);
+        }
+    }
+
+    public static function removeOnce(string $id, mixed $tag)
+    {
+        session_regenerate_id(true);
+        if (self::have($id, $tag)) {
+            unset($_SESSION[Session::KEY_OF_SESSION][$id][$tag]);
+            sort($_SESSION[Session::KEY_OF_SESSION][$id]);
         }
     }
 
@@ -64,25 +83,25 @@ class Session
         session_destroy();
     }
 
-    public static function getOnce(string $tag, string $default = ''): mixed
+    public static function getOnce(string $id, string $default = ''): mixed
     {
         Session::new();
         session_regenerate_id(true);
-        if (isset($_SESSION[Session::KEY_OF_SESSION][$tag])) {
-            $d = $_SESSION[Session::KEY_OF_SESSION][$tag];
+        if (self::have($id)) {
+            $d = $_SESSION[Session::KEY_OF_SESSION][$id];
+            self::remove($id);
         }
-        self::remove($tag);
         return $d ?? $default;
     }
 
-    public static function getFirstOnce(string $tag, string $default = ''): mixed
+    public static function getFirstOnce(string $id, string $tag = null, string $default = ''): mixed
     {
         Session::new();
         session_regenerate_id(true);
-        if (isset($_SESSION[Session::KEY_OF_SESSION][$tag])) {
-            $d = $_SESSION[Session::KEY_OF_SESSION][$tag];
+        if (self::have($id)) {
+            $d = $_SESSION[Session::KEY_OF_SESSION][$id][!empty($tag) ? $tag : 0];
+            self::removeOnce($id, !empty($tag) ? $tag : 0);
         }
-        self::removeOnce($tag, 0);
-        return $d[0] ?? $default;
+        return $d ?? $default;
     }
 }
