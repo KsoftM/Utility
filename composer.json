@@ -15,8 +15,8 @@
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
-            "ksoftm\\": "./src"
+            "ksoftm\\system\\": "./src"
         }
     },
-    "version": "0.0.7"
+    "version": "0.1.0"
 }
