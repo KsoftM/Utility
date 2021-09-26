@@ -50,29 +50,27 @@ class FileManager implements IDirectory, IFile
         return false;
     }
 
-    public function requireOnce(): string|false
+    public function requireOnce(bool $clean = false): mixed
     {
         if ($this->isExist()) {
-            if (ob_get_length() != false) {
+            if (ob_get_length() != false && $clean) {
                 ob_end_clean();
             }
-            ob_start();
-            require_once($this->path);
-            return ob_get_clean();
+
+            return require_once($this->path);
         }
 
         return false;
     }
 
-    public function includeOnce(): string|false
+    public function includeOnce(bool $clean = false): mixed
     {
         if ($this->isExist()) {
-            if (ob_get_length() != false) {
+            if (ob_get_length() != false && $clean) {
                 ob_end_clean();
             }
-            ob_start();
-            include_once($this->path);
-            return ob_get_clean();
+
+            return include_once($this->path);
         }
 
         return false;

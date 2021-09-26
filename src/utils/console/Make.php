@@ -2,14 +2,19 @@
 
 namespace ksoftm\system\utils\console;
 
+use ksoftm\system\utils\database\ApplyMigration;
+use ksoftm\system\utils\database\Migration;
+use ksoftm\system\utils\io\FileManager;
 use ksoftm\system\utils\validator\MegaValid;
 use ksoftm\system\utils\validator\MegRule;
+use PDO;
 
 class Make
 {
     public const FUNC_MIGRATION = 'make:migration';
     public const FUNC_CONTROLLER = 'make:controller';
     public const FUNC_MODEL = 'make:model';
+    public const FUNC_MIGRATE = 'migrate';
 
     public const FUNC_SHORT = [
         '-m', '-c', '-r'
@@ -50,29 +55,48 @@ class Make
 
     public static function process($args, $root): void
     {
+        echo PHP_EOL;
 
-        $func = array_shift($args);
-        $name = array_shift($args);
-        $optional = $args;
+        if (!empty($args))
+            $func = array_shift($args);
+        if (!empty($args))
+            $optional = $args;
 
-        if (!self::IsValidName($name)) {
-            Log::BlogLog("Migration name is invalid.");
+        if (empty($func)) {
+            Log::BlogLog("Invalid argument passed.");
             exit;
         }
 
-        // $className = Make::generateClassName($name);
+        if (!empty($optional) && is_array($optional)) {
+            $optional = $optional[0];
+        }
 
         switch ($func) {
             case Make::FUNC_MIGRATION:
-                self::migration($name, $root);
+                if (!empty($optional) && self::IsValidName($optional))
+                    self::migration($optional, $root);
+                else
+                    Log::BlogLog("Invalid argument passed.");
+
                 break;
             case Make::FUNC_CONTROLLER:
-                self::controller($name, $root);
+                if (!empty($optional) && self::IsValidName($optional))
+                    self::controller($optional, $root);
+                else
+                    Log::BlogLog("Invalid argument passed.");
+
                 break;
             case Make::FUNC_MODEL:
-                self::model($name, $root);
-                break;
+                if (!empty($optional) && self::IsValidName($optional))
+                    self::model($optional, $root);
+                else
+                    Log::BlogLog("Invalid argument passed.");
 
+                break;
+            case Make::FUNC_MIGRATE:
+                self::migrate($root, $optional ?? false);
+
+                break;
             default:
                 Log::BlogLog('Invalid commend.');
                 break;
@@ -89,7 +113,7 @@ class Make
         return preg_match('/^[a-zA-Z0-9_]{3,60}$/', $Name) === false ? false : true;
     }
 
-    public static function migration(string $name, string $root): void
+    public static function migration(string|false $name, string|false $root): void
     {
         MakeMigration::makeMigrationFile(
             $name,
@@ -98,7 +122,20 @@ class Make
         );
     }
 
-    public static function controller(string $name, string $root): void
+    public static function migrate(string|false $root, array|string|false $optional): void
+    {
+        $path = $root . self::PATH[self::FUNC_MIGRATION];
+
+        Log::block(function () use ($optional, $path) {
+            if ($optional == '-r') {
+                ApplyMigration::applyRoleBackMigration($path);
+            } else {
+                ApplyMigration::applyMigration($path);
+            }
+        });
+    }
+
+    public static function controller(string|false $name, string|false $root): void
     {
         MakeController::makeControllerFile(
             $name,
@@ -109,7 +146,7 @@ class Make
 
     public static function model(): void
     {
-        //TODO make model
+        // TODO make model
         // MakeModel::makeModelFile(
         //     $name,
         //     $root . self::PATH[self::FUNC_MODEL],

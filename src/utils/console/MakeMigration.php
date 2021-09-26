@@ -10,22 +10,33 @@ class MakeMigration
 
     public static function getMigrationFileName(string $fileName): ?string
     {
-        return (explode(self::SPECIAL_SEPARATOR, pathinfo($fileName, PATHINFO_FILENAME), 2) + [null, null])[1];
+        $path = (explode(
+            self::SPECIAL_SEPARATOR,
+            pathinfo($fileName, PATHINFO_FILENAME),
+            2
+        ) + [null, null])[1];
+
+        return str_replace('_', '', ucwords(
+            $path,
+            '_'
+        ));
     }
 
     public static function createUniqueFileName(string $migrationName): string
     {
-        return date_create()->format('Y_m_d_G_i_s_u') . self::SPECIAL_SEPARATOR . $migrationName;
+        return date_create()->format('Y_m_d_G_i_s_u') . self::SPECIAL_SEPARATOR .
+            $migrationName . '_migration';
     }
 
     public static function makeMigrationFile(string $migrationName, string $path, string $templatePath): void
     {
         $file = new FileManager($path);
-        $className = Make::generateClassName($migrationName);
+        $className = Make::generateClassName($migrationName . '_migration');
 
         foreach ($file->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
                 $name = self::getMigrationFileName($value->getPath()) ?? '';
+
 
                 if (!empty($migrationName) && $migrationName == $name) {
                     Log::BlogLog("Migration name must be unique.");
@@ -40,17 +51,10 @@ class MakeMigration
         }
 
         $uniqueFileName = self::createUniqueFileName($migrationName);
-        $className = Make::generateClassName($migrationName);
+        $className = Make::generateClassName($migrationName . '_migration');
 
-        $file = new FileManager($path . "/$uniqueFileName.php");
-
-        $data = new FileManager($templatePath);
-
-        if ($file->write($data->read(), true)) {
-            Log::BlogLog("$uniqueFileName is created successfully.");
-        } else {
-            Log::BlogLog("Migration file is not created...!");
-            exit;
-        }
+        MakeTemplateFile::create($path, $uniqueFileName, $templatePath, [
+            '{className}' => $className
+        ]);
     }
 }

@@ -37,16 +37,16 @@ interface IFile
     /**
      * request the given path file
      *
-     * @return string|false
+     * @return mixed
      */
-    function requireOnce(): string|false;
+    function requireOnce(): mixed;
 
     /**
      * include the given path file
      *
-     * @return string|false
+     * @return mixed
      */
-    function includeOnce(): string|false;
+    function includeOnce(): mixed;
 
     /**
      * clean the given path file

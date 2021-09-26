@@ -10,6 +10,7 @@ class MakeController
     {
         return pathinfo($fileName, PATHINFO_FILENAME);
     }
+    
     public static function makeControllerFile(string $controllerName, string $path, string $templatePath): void
     {
         $file = new FileManager($path);
@@ -31,15 +32,8 @@ class MakeController
             }
         }
 
-        $file = new FileManager($path . "/$className.php");
-
-        $data = new FileManager($templatePath);
-
-        if ($file->write($data->read(), true)) {
-            Log::BlogLog("$className is created successfully.");
-        } else {
-            Log::BlogLog("Controller file is not created...!");
-            exit;
-        }
+        MakeTemplateFile::create($path, $className, $templatePath, [
+            '{className}' => $className
+        ]);
     }
 }

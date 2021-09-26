@@ -62,46 +62,69 @@ class Session
 
     public static function remove(string $id)
     {
-        session_regenerate_id(true);
         if (self::have($id)) {
             unset($_SESSION[Session::KEY_OF_SESSION][$id]);
         }
+        session_regenerate_id(true);
     }
 
     public static function removeOnce(string $id, mixed $tag)
     {
-        session_regenerate_id(true);
         if (self::have($id, $tag)) {
             unset($_SESSION[Session::KEY_OF_SESSION][$id][$tag]);
             sort($_SESSION[Session::KEY_OF_SESSION][$id]);
+            session_regenerate_id(true);
         }
     }
 
     public static function clean()
     {
-        session_regenerate_id(true);
         session_destroy();
+        session_regenerate_id(true);
+    }
+
+    public static function get(string $id, string $default = ''): mixed
+    {
+        Session::new();
+        if (self::have($id)) {
+            $d = $_SESSION[Session::KEY_OF_SESSION][$id];
+        }
+        session_regenerate_id(true);
+        return $d ?? $default;
     }
 
     public static function getOnce(string $id, string $default = ''): mixed
     {
         Session::new();
+        $d = Session::get($id, $default);
+        self::remove($id);
+        return $d ?? $default;
+    }
+
+    public static function getFirst(string $id, string $tag = null, string $default = ''): mixed
+    {
+        Session::new();
+
+        $tag = !empty($tag) ? $tag : 0;
+        $d = (isset(Session::get($id, $default)[$tag]))
+            ? Session::get($id, $default)[$tag]
+            : $default;
         session_regenerate_id(true);
-        if (self::have($id)) {
-            $d = $_SESSION[Session::KEY_OF_SESSION][$id];
-            self::remove($id);
-        }
+
         return $d ?? $default;
     }
 
     public static function getFirstOnce(string $id, string $tag = null, string $default = ''): mixed
     {
         Session::new();
+        
+        $tag = !empty($tag) ? $tag : 0;
+        $d = (isset(Session::get($id, $default)[$tag]))
+        ? Session::get($id, $default)[$tag]
+        : $default;
+        self::removeOnce($id, $tag);
         session_regenerate_id(true);
-        if (self::have($id)) {
-            $d = $_SESSION[Session::KEY_OF_SESSION][$id][!empty($tag) ? $tag : 0];
-            self::removeOnce($id, !empty($tag) ? $tag : 0);
-        }
+
         return $d ?? $default;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace ksoftm\system\utils\database;
 
+use ksoftm\system\utils\console\MakeMigration;
 use ksoftm\system\utils\io\FileManager;
 
 class ApplyMigration
@@ -10,17 +11,18 @@ class ApplyMigration
     {
         $f = new FileManager($migrationDir);
 
-        foreach ($f->getDirectoryFileNames(true) as $value) {
+        foreach ($f->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
-                $class = MakeMigration::getClassNameUsingFile($value->getPath());
+                $fileName = pathinfo($value->getPath(), PATHINFO_FILENAME);
+                $class = MakeMigration::getMigrationFileName($fileName);
 
                 if (!empty($class)) {
-
                     $value->requireOnce();
-
-                    $class = new $class();
-                    if ($class instanceof Migration) {
-                        $class->applyMigration();
+                    if (class_exists($class)) {
+                        $class = new $class();
+                        if ($class instanceof Migration) {
+                            $class->applyMigration($fileName);
+                        }
                     }
                 }
             }
@@ -31,17 +33,19 @@ class ApplyMigration
     {
         $f = new FileManager($migrationDir);
 
-        foreach ($f->getDirectoryFileNames(true) as $value) {
+        foreach ($f->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
-                $class = MakeMigration::getClassNameUsingFile($value->getPath());
+                $fileName = pathinfo($value->getPath(), PATHINFO_FILENAME);
+                $class = MakeMigration::getMigrationFileName($fileName);
 
                 if (!empty($class)) {
 
                     $value->requireOnce();
-
-                    $class = new $class();
-                    if ($class instanceof Migration) {
-                        $class->applyRoleBackMigration();
+                    if (class_exists($class)) {
+                        $class = new $class();
+                        if ($class instanceof Migration) {
+                            $class->applyRoleBackMigration($fileName);
+                        }
                     }
                 }
             }
