@@ -38,26 +38,19 @@ class Session
     public static function flash(
         string $id,
         string $message,
-        string $tag = null,
         int $timestamp = 0
     ) {
         Session::new($timestamp);
         session_regenerate_id(true);
-        if (!empty($tag)) {
-            $_SESSION[Session::KEY_OF_SESSION][$id][$tag] = $message;
-        } else {
-            $_SESSION[Session::KEY_OF_SESSION][$id][] = $message;
-        }
+        $_SESSION[Session::KEY_OF_SESSION][$id] = $message;
     }
 
-    public static function have(string $id, string $tag = null): bool
+    public static function have(string $id): bool
     {
-        if (!empty($tag) && !empty($_SESSION[Session::KEY_OF_SESSION][$id][$tag])) {
-            $out = true;
-        } elseif (empty($tag) && !empty($_SESSION[Session::KEY_OF_SESSION][$id])) {
-            $out = true;
+        if (!empty($_SESSION[Session::KEY_OF_SESSION][$id])) {
+            return true;
         }
-        return $out ?? false;
+        return false;
     }
 
     public static function remove(string $id)
@@ -68,11 +61,11 @@ class Session
         session_regenerate_id(true);
     }
 
-    public static function removeOnce(string $id, mixed $tag)
+    public static function removeOnce(string $id)
     {
-        if (self::have($id, $tag)) {
-            unset($_SESSION[Session::KEY_OF_SESSION][$id][$tag]);
-            sort($_SESSION[Session::KEY_OF_SESSION][$id]);
+        if (self::have($id)) {
+            unset($_SESSION[Session::KEY_OF_SESSION][$id]);
+            sort($_SESSION[Session::KEY_OF_SESSION]);
             session_regenerate_id(true);
         }
     }
@@ -98,33 +91,6 @@ class Session
         Session::new();
         $d = Session::get($id, $default);
         self::remove($id);
-        return $d ?? $default;
-    }
-
-    public static function getFirst(string $id, string $tag = null, string $default = ''): mixed
-    {
-        Session::new();
-
-        $tag = !empty($tag) ? $tag : 0;
-        $d = (isset(Session::get($id, $default)[$tag]))
-            ? Session::get($id, $default)[$tag]
-            : $default;
-        session_regenerate_id(true);
-
-        return $d ?? $default;
-    }
-
-    public static function getFirstOnce(string $id, string $tag = null, string $default = ''): mixed
-    {
-        Session::new();
-        
-        $tag = !empty($tag) ? $tag : 0;
-        $d = (isset(Session::get($id, $default)[$tag]))
-        ? Session::get($id, $default)[$tag]
-        : $default;
-        self::removeOnce($id, $tag);
-        session_regenerate_id(true);
-
         return $d ?? $default;
     }
 }

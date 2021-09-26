@@ -1,0 +1,10 @@
+<?php
+
+namespace ksoftm\app\http\controller;
+
+use ksoftm\system\model\Model;
+
+class {className} extends Model
+{
+    
+}

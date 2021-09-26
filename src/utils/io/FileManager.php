@@ -38,6 +38,41 @@ class FileManager implements IDirectory, IFile
         return $this->path;
     }
 
+    public function getName(): string|false
+    {
+        if ($this->isExist()) {
+            $name = pathinfo($this->path, PATHINFO_BASENAME);
+        }
+
+        return $name ?? false;
+    }
+
+    public function getNameOnly(): string|false
+    {
+        if ($this->isExist()) {
+            $name = pathinfo($this->path, PATHINFO_FILENAME);
+        }
+
+        return $name ?? false;
+    }
+
+    public function getExtension(): string|false
+    {
+        if ($this->isExist()) {
+            $name = pathinfo($this->path, PATHINFO_EXTENSION);
+        }
+
+        return $name ?? false;
+    }
+
+    public function getParentDir(): string|false
+    {
+        if ($this->isExist()) {
+            $name = pathinfo($this->path, PATHINFO_DIRNAME);
+        }
+
+        return $name ?? false;
+    }
 
     // read content using a path
     //TODO in the future this will change [file_get_contents] to [stream_get_contents]
