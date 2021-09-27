@@ -2,7 +2,7 @@
 
 namespace ksoftm\system\utils\database;
 
-use ksoftm\system\utils\console\MakeMigration;
+use ksoftm\system\utils\console\Make;
 use ksoftm\system\utils\io\FileManager;
 
 class ApplyMigration
@@ -14,7 +14,7 @@ class ApplyMigration
         foreach ($f->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
                 $fileName = pathinfo($value->getPath(), PATHINFO_FILENAME);
-                $class = MakeMigration::getMigrationFileName($fileName);
+                $class = Make::getFileName($fileName);
 
                 if (!empty($class)) {
                     $value->requireOnce();
@@ -36,7 +36,7 @@ class ApplyMigration
         foreach ($f->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
                 $fileName = pathinfo($value->getPath(), PATHINFO_FILENAME);
-                $class = MakeMigration::getMigrationFileName($fileName);
+                $class = Make::getFileName($fileName);
 
                 if (!empty($class)) {
 
@@ -46,6 +46,7 @@ class ApplyMigration
                         if ($class instanceof Migration) {
                             $class->applyRoleBackMigration($fileName);
                         }
+                    } else {
                     }
                 }
             }

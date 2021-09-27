@@ -6,8 +6,13 @@ use ksoftm\system\utils\io\FileManager;
 
 class MakeTemplateFile
 {
-    public static function create(string $path, string $className, string $templatePath, array $replaces): bool
-    {
+    public static function create(
+        string $path,
+        string $className,
+        string $fileName,
+        string $templatePath,
+        array $replaces
+    ): bool {
         $file = new FileManager($path);
         foreach ($file->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
@@ -21,7 +26,7 @@ class MakeTemplateFile
             }
         }
 
-        $file = new FileManager($path . "/$className.php");
+        $file = new FileManager($path . "/$fileName.php");
 
         if (!$file->isExist()) {
             $data = new FileManager($templatePath);

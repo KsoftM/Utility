@@ -74,13 +74,19 @@ class Make
             $optional = array_shift($args);
         }
 
-        if (empty($func)) {
-            Log::BlogLog("Invalid argument passed.");
+        if (empty($func) || !in_array($func, [
+            self::FUNC_MIGRATION,
+            self::FUNC_CONTROLLER,
+            self::FUNC_MODEL,
+            self::FUNC_MIGRATE
+        ])) {
+            Log::BlogLog("Invalid argument function passed.");
             exit;
         }
-
         if (!empty($optional) && is_array($optional)) {
             $optional = array_shift($optional);
+        } else {
+            $optional = $optional ?? [];
         }
 
         log::block(function () use ($optional, $func, $root, $args) {
@@ -122,13 +128,11 @@ class Make
                 self::migrate($root, $optional ?? false);
             }
         });
-
-        // Log::BlogLog($func . PHP_EOL . $name . PHP_EOL . implode(', ', $optional));
     }
 
     public static function IsValidName(string $Name): bool
     {
-        return preg_match('/^[a-zA-Z0-9_]{3,60}$/', $Name) === false ? false : true;
+        return MegaValid::validate([[$Name, MegRule::new()->userName()]]);
     }
 
 
@@ -136,13 +140,11 @@ class Make
     {
         $path = $root . self::$PATH[self::FUNC_MIGRATION];
 
-        Log::block(function () use ($optional, $path) {
-            if ($optional == '-r') {
-                ApplyMigration::applyRoleBackMigration($path);
-            } else {
-                ApplyMigration::applyMigration($path);
-            }
-        });
+        if ($optional == '-r') {
+            ApplyMigration::applyRoleBackMigration($path);
+        } else {
+            ApplyMigration::applyMigration($path);
+        }
     }
 
     public static function migration(string|false $migrationName, string|false $root): void
@@ -153,7 +155,7 @@ class Make
         $className = Make::generateClassName($migrationName . '_migration');
         $uniqueFileName = self::createUniqueFileName($migrationName);
 
-        MakeTemplateFile::create($path, $uniqueFileName, $templatePath, [
+        MakeTemplateFile::create($path, $className, $uniqueFileName, $templatePath, [
             '{className}' => $className
         ]);
     }
@@ -164,7 +166,7 @@ class Make
         $templatePath = __DIR__ . self::$TEMPLATE[self::FUNC_CONTROLLER];
         $className = Make::generateClassName($controllerName . '_controller');
 
-        MakeTemplateFile::create($path, $className, $templatePath, [
+        MakeTemplateFile::create($path, $className, $className, $templatePath, [
             '{className}' => $className
         ]);
     }
@@ -175,7 +177,7 @@ class Make
         $templatePath = __DIR__ . self::$TEMPLATE[self::FUNC_MODEL];
         $className = Make::generateClassName($modelName . "_model");
 
-        MakeTemplateFile::create($path, $className, $templatePath, [
+        MakeTemplateFile::create($path, $className, $className, $templatePath, [
             '{className}' => $className
         ]);
     }

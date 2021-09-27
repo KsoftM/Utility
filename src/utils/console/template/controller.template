@@ -6,4 +6,5 @@ use ksoftm\system\controller\Controller;
 
 class {className} extends Controller
 {
+    
 }

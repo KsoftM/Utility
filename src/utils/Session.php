@@ -9,11 +9,8 @@ namespace ksoftm\system\utils;
  */
 class Session
 {
-
     protected const KEY_OF_SESSION = 'flash_session';
-
-    // return redirect()->action('HomeController@index', ['id' => 10]);
-
+    
     /**
      * Class constructor.
      */

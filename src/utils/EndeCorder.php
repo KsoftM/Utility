@@ -12,8 +12,8 @@ class EndeCorder
     public const CIPHER_AES_128_CTR = 'AES-128-CTR';
     public const CIPHER_AES_256_CTR = 'AES-256-CTR';
 
-    protected const MAX_LENGTH_AES_128_CTR = 16;
-    protected const MAX_LENGTH_AES_256_CTR = 32;
+    protected const MAX_LENGTH_AES_128_CTR = 8;
+    protected const MAX_LENGTH_AES_256_CTR = 8;
 
     //<<-----X----->> aloud cipher <<-----X----->>//
 
@@ -74,9 +74,9 @@ class EndeCorder
     {
         $bitCount = mb_strlen(base64_decode($key), '8bit');
 
-        return ($bitCount == EndeCorder::MAX_LENGTH_AES_128_CTR &&
+        return ($bitCount >= EndeCorder::MAX_LENGTH_AES_128_CTR &&
             $cipher === EndeCorder::CIPHER_AES_128_CTR) ||
-            ($bitCount == EndeCorder::MAX_LENGTH_AES_256_CTR &&
+            ($bitCount >= EndeCorder::MAX_LENGTH_AES_256_CTR &&
                 $cipher === EndeCorder::CIPHER_AES_256_CTR);
     }
 
@@ -116,7 +116,7 @@ class EndeCorder
      *
      * @return string
      */
-    public function SSLEncrypt(mixed $data, bool $serialization = false): string
+    public function encrypt(mixed $data, bool $serialization = false): string
     {
         // create the unique in for specified algorithm
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->cipher));
@@ -132,10 +132,11 @@ class EndeCorder
 
         $iv = base64_encode($iv);
 
+        $hash = self::BigHash(json_encode(compact('iv', 'data')), $this->key);
         // compact will create a associative array
-        $hash = json_encode(compact('iv', 'data'));
+        $hash = json_encode(compact('iv', 'data', 'hash'));
 
-        if ($hash == false || $data == false) {
+        if ($data == false || $hash == false) {
             throw new Exception('SSL Encryption failed.');
         }
 
@@ -151,27 +152,40 @@ class EndeCorder
      *
      * @return string
      */
-    public function SSLDecrypt(
+    public function decrypt(
         string $data,
         bool $serialization = false
     ): string {
         // separate the [encryptedData] and [iv] from base64 formatted encrypted data
-        ['iv' => $iv, 'data' => $data] = json_decode(base64_decode($data), true);
+        ['iv' => $iv, 'data' => $data, 'hash' => $hash] = json_decode(base64_decode($data), true);
+        $iv = base64_decode($iv);
 
-        // decrypt the data
-        $data = openssl_decrypt(
-            $data,
-            $this->cipher,
-            $this->key,
-            0,
-            base64_decode($iv)
-        );
+        if ($this->isValidHash($hash, $iv, $data)) {
+            // decrypt the data
+            $data = openssl_decrypt(
+                $data,
+                $this->cipher,
+                $this->key,
+                0,
+                $iv
+            );
 
-        if ($data == false) {
-            throw new Exception('SSL Decryption failed.');
+            if ($data == false) {
+                throw new Exception('SSL Decryption failed.');
+            }
+        } else {
+            throw new Exception('Hash value not match.');
         }
 
         return $serialization ? unserialize($data) : $data;
+    }
+
+    private function isValidHash($hash, $iv, $data): bool
+    {
+        return hash_equals(
+            $hash,
+            self::BigHash(json_encode(compact('iv', 'data')), $this->key)
+        );
     }
 
     //<<-----X----->> encryption and decryption <<-----X----->>//
@@ -189,7 +203,7 @@ class EndeCorder
      *
      * @return string
      */
-    public static function BigHash(string $data, string $key, bool $binary = false, string $method = 'sha256'): string
+    public static function BigHash(string $data, string $key, bool $binary = false, string $method = 'md5'): string
     {
         return hash_hmac($method, $data, $key, $binary);
     }
@@ -223,7 +237,7 @@ class EndeCorder
         }
 
         // return the encrypted key
-        return EndeCorder::new($uniqueKey)->SSLEncrypt($name);
+        return EndeCorder::new($uniqueKey)->encrypt($name);
     }
 
     /**
@@ -241,7 +255,7 @@ class EndeCorder
         string $uniqueKey
     ): TokenResult {
         // decrypt the data and check it is a valid token
-        $token = EndeCorder::new($uniqueKey)->SSLDecrypt($token);
+        $token = EndeCorder::new($uniqueKey)->decrypt($token);
 
         if (!empty($token)) {
             // separate the name and time
