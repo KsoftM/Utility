@@ -17,53 +17,55 @@ trait ArgumentsTrait
         mixed $data,
         string $alias = null,
         bool $overRight = false
-    ) {
-        if (empty($alias)) {
+    ): void {
+        if (is_null($alias)) {
             $this->args[$name][] = $data;
         } else {
             if ($overRight || !($this->have($name, $alias))) {
                 $this->args[$name][$alias] = $data;
             }
         }
-        sort($this->args);
     }
 
-    protected function have(string $name, string $alias = null): bool
+    public function have(string $name, string $alias = null): bool
     {
-        if (!empty($name)) {
-            if (!empty($alias)) {
-                return in_array($alias, $this->getAll()[$name]);
+        if (!is_null($name)) {
+            if (!is_null($alias) && array_key_exists($name, $this->getAll())) {
+                return array_key_exists($alias, $this->getAll()[$name]);
             } else {
-                return in_array($name, $this->getAll());
+                return array_key_exists($name, $this->getAll());
             }
         }
         return false;
     }
 
-    protected function getArguments(string $name, string $alias = null): ?array
+    public function getArguments(string $name, string $alias = null): mixed
     {
-        if ($this->haveName($name) && !empty($alias)) {
-            return $this->getAll()[$name];
-        } elseif ($this->have($name, $alias)) {
+        if ($this->have($name, $alias) && !is_null($alias)) {
             return $this->getAll()[$name][$alias];
+        } elseif ($this->have($name)) {
+            return $this->getAll()[$name];
         }
         return null;
     }
 
     protected function getAll(): array
     {
-        return !empty($this->args ?? []) ?: [];
+        return !empty($this->args ?? []) ? $this->args : [];
     }
 
-    protected function removeArguments(string $name, string $alias = null): bool
+    protected function clean(): void
+    {
+        $this->args = [];
+    }
+
+    public function removeArguments(string $name, string $alias = null): bool
     {
         if ($this->haveName($name)) {
-            if (empty($alias)) {
+            if (is_null($alias)) {
                 unset($this->args[$name]);
-                sort($this->args);
             } else {
                 unset($this->args[$name][$alias]);
-                sort($this->args);
             }
             return true;
         }
