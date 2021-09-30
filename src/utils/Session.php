@@ -5,7 +5,6 @@ namespace ksoftm\system\utils;
 
 /**
  * session class
- *! Session class is under development
  */
 class Session
 {

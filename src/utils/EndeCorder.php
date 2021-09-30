@@ -12,6 +12,9 @@ class EndeCorder
     public const CIPHER_AES_128_CTR = 'AES-128-CTR';
     public const CIPHER_AES_256_CTR = 'AES-256-CTR';
 
+    protected const MAX_LENGTH_AES_128_CTR = 16;
+    protected const MAX_LENGTH_AES_256_CTR = 32;
+
     //<<-----X----->> aloud cipher <<-----X----->>//
 
 
@@ -126,15 +129,16 @@ class EndeCorder
             0,
             $iv
         );
+        $hash = $this->hash($iv . $data);
 
         $iv = base64_encode($iv);
 
-        $hash = self::BigHash(json_encode(compact('iv', 'data')), $this->key);
         // compact will create a associative array
-        $hash = json_encode(compact('iv', 'data', 'hash'));
+        $hash = json_encode(compact('iv', 'data', 'hash'), JSON_UNESCAPED_SLASHES);
 
+        // exit;
         if ($data == false || $hash == false) {
-            throw new Exception('SSL Encryption failed.');
+            throw new Exception('Encryption failed.');
         }
 
         return base64_encode($hash);
@@ -154,7 +158,18 @@ class EndeCorder
         bool $serialization = false
     ): string {
         // separate the [encryptedData] and [iv] from base64 formatted encrypted data
-        ['iv' => $iv, 'data' => $data, 'hash' => $hash] = json_decode(base64_decode($data), true);
+        $json = json_decode(base64_decode($data), true);
+
+        if ($json == false) {
+            throw new Exception('Decryption data is not valid.');
+        }
+
+        [
+            'iv' => $iv,
+            'data' => $data,
+            'hash' => $hash
+        ] = $json + ['iv' => null, 'data' => null, 'hash' => null];
+
         $iv = base64_decode($iv);
 
         if ($this->isValidHash($hash, $iv, $data)) {
@@ -168,7 +183,7 @@ class EndeCorder
             );
 
             if ($data == false) {
-                throw new Exception('SSL Decryption failed.');
+                throw new Exception('Decryption failed.');
             }
         } else {
             throw new Exception('Hash value not match.');
@@ -177,11 +192,11 @@ class EndeCorder
         return $serialization ? unserialize($data) : $data;
     }
 
-    private function isValidHash($hash, $iv, $data): bool
+    private function isValidHash(string $hash, $iv, $data): bool
     {
         return hash_equals(
-            $hash,
-            self::BigHash(json_encode(compact('iv', 'data')), $this->key)
+            $this->hash($iv . $data),
+            $hash
         );
     }
 
@@ -200,9 +215,9 @@ class EndeCorder
      *
      * @return string
      */
-    public static function BigHash(string $data, string $key, bool $binary = false, string $method = 'md5'): string
+    public function hash(string $data, bool $binary = false, string $method = 'md5'): string
     {
-        return hash_hmac($method, $data, $key, $binary);
+        return hash_hmac($method, $data, $this->key, $binary);
     }
 
     //<<-----X----->> big hashing with key <<-----X----->>//

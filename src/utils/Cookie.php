@@ -82,7 +82,7 @@ class Cookie
 
     public function encrypt(string $key): Cookie|false
     {
-        $this->value = EndeCorder::new($this->EncryptKey($key))->SSLEncrypt($this->value);
+        $this->value = EndeCorder::new($this->EncryptKey($key))->encrypt($this->value);
 
         return $this;
     }
@@ -159,7 +159,7 @@ class Cookie
         $this->get();
 
         if (isset($this->value)) {
-            $this->value = EndeCorder::new($this->EncryptKey($key))->SSLDecrypt($this->value);
+            $this->value = EndeCorder::new($this->EncryptKey($key))->decrypt($this->value);
             return $this->value ?? $default;
         }
 
