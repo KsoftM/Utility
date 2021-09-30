@@ -12,9 +12,6 @@ class EndeCorder
     public const CIPHER_AES_128_CTR = 'AES-128-CTR';
     public const CIPHER_AES_256_CTR = 'AES-256-CTR';
 
-    protected const MAX_LENGTH_AES_128_CTR = 8;
-    protected const MAX_LENGTH_AES_256_CTR = 8;
-
     //<<-----X----->> aloud cipher <<-----X----->>//
 
 
