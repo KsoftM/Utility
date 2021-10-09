@@ -6,7 +6,7 @@ namespace ksoftm\system\utils\datatype;
 class Dictionary
 {
     /** @var array $args arguments of the dictionary. */
-    public array $args = [];
+    protected array $args = [];
 
     /**
      * Class constructor.

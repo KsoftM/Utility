@@ -6,7 +6,7 @@ class ListData
 {
 
     /** @var array $args arguments of the dictionary. */
-    public array $args = [];
+    protected array $args = [];
 
     /**
      * Class constructor.
@@ -56,5 +56,13 @@ class ListData
     public function have($value): bool
     {
         return in_array($value, $this->args);
+    }
+
+    public function get($key): mixed
+    {
+        if (!is_null($key) && $this->have($key)) {
+            return $this->args[$key];
+        }
+        return false;
     }
 }
