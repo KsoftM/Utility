@@ -159,13 +159,7 @@ abstract class Mixer
      */
     protected static function lang(string $data): array|false
     {
-        $lang = pathinfo(
-            pathinfo(
-                parse_url($_SERVER['HTTP_HOST'], PHP_URL_HOST),
-                PATHINFO_FILENAME
-            ),
-            PATHINFO_FILENAME
-        );
+        $lang = filter_input(INPUT_COOKIE, 'lang');
 
         $lang = ($lang != parse_url($_SERVER['HTTP_HOST'], PHP_URL_HOST)) ? $lang : 'en';
 
