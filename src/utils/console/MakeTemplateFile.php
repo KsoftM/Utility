@@ -13,7 +13,7 @@ class MakeTemplateFile
         string $templatePath,
         array $replaces
     ): bool {
-        $file = new FileManager($path);
+        $file = FileManager::new($path);
         foreach ($file->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
                 $name = Make::getFileName($value->getPath());
@@ -26,11 +26,10 @@ class MakeTemplateFile
             }
         }
 
-        $file = new FileManager($path . "/$fileName.php");
+        $file = FileManager::new($path . "/$fileName.php");
 
         if (!$file->isExist()) {
-            $data = new FileManager($templatePath);
-            $data = $data->read();
+            $data = FileManager::new($templatePath)->read();
 
             foreach ($replaces as $key => $value) {
                 $data = str_replace($key, $value, $data);

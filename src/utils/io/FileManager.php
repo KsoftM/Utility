@@ -24,12 +24,17 @@ class FileManager implements IDirectory, IFile
     /**
      * Class constructor.
      */
-    public function __construct(string $path, array $ignores = null)
+    protected function __construct(string $path, array $ignores = null)
     {
         $this->path = $path;
         if (!empty($ignores)) {
             $this->ignores = $ignores;
         }
+    }
+
+    public static function new(string $path, array $ignores = null): FileManager
+    {
+        return new FileManager($path, $ignores);
     }
 
     // get the path of the file
@@ -74,8 +79,7 @@ class FileManager implements IDirectory, IFile
         return $name ?? false;
     }
 
-    // read content using a path
-    //TODO in the future this will change [file_get_contents] to [stream_get_contents]
+    // read content using a path without stream
     public function read(bool $use_include_path = false): string|false
     {
         if ($this->isExist()) {
@@ -85,27 +89,107 @@ class FileManager implements IDirectory, IFile
         return false;
     }
 
-    public function requireOnce(bool $clean = false): mixed
+    public function getSize(): int
     {
-        if ($this->isExist()) {
-            if (ob_get_length() != false && $clean) {
-                ob_end_clean();
-            }
+        return filesize($this->path);
+    }
 
-            return require_once($this->path);
+    // read content using a path with stream
+    public function readStream(bool $use_include_path = false): string|false
+    {
+        $ctx = stream_context_create();
+
+        if (false !== ($fRes = fopen($this->path, 'r', context: $ctx))) {
+            if ($this->getSize() > 1024 * 512) {
+                $readLength = 1024 * 512;
+            } else {
+                $readLength = $this->getSize();
+            }
+            while ((false !== ($d = stream_get_contents($fRes, $readLength))) && strlen($d) > 0) {
+                echo $d;
+            }
+            fclose($fRes);
+            return '';
+        }
+
+        if ($this->isExist()) {
+            return file_get_contents($this->path, $use_include_path);
         }
 
         return false;
     }
 
-    public function includeOnce(bool $clean = false): mixed
+    public function requireOnce(bool $beforeClean = false, bool $cleanCode = false): mixed
     {
         if ($this->isExist()) {
-            if (ob_get_length() != false && $clean) {
+            if (ob_get_length() != false && $beforeClean) {
                 ob_end_clean();
             }
 
-            return include_once($this->path);
+            if ($cleanCode) {
+                ob_start();
+                require_once($this->path);
+                return ob_get_clean();
+            } else {
+                return require_once($this->path);
+            }
+        }
+
+        return false;
+    }
+
+    public function require(bool $beforeClean = false, bool $cleanCode = false): mixed
+    {
+        if ($this->isExist()) {
+            if (ob_get_length() != false && $beforeClean) {
+                ob_end_clean();
+            }
+
+            if ($cleanCode) {
+                ob_start();
+                require($this->path);
+                return ob_get_clean();
+            } else {
+                return require($this->path);
+            }
+        }
+
+        return false;
+    }
+
+    public function includeOnce(bool $beforeClean = false, bool $cleanCode = false): mixed
+    {
+        if ($this->isExist()) {
+            if (ob_get_length() != false && $beforeClean) {
+                ob_end_clean();
+            }
+
+            if ($cleanCode) {
+                ob_start();
+                include_once($this->path);
+                return ob_get_clean();
+            } else {
+                return include_once($this->path);
+            }
+        }
+
+        return false;
+    }
+
+    public function include(bool $beforeClean = false, bool $cleanCode = false): mixed
+    {
+        if ($this->isExist()) {
+            if (ob_get_length() != false && $beforeClean) {
+                ob_end_clean();
+            }
+
+            if ($cleanCode) {
+                ob_start();
+                include($this->path);
+                return ob_get_clean();
+            } else {
+                return include($this->path);
+            }
         }
 
         return false;
@@ -137,7 +221,7 @@ class FileManager implements IDirectory, IFile
     // read content using a path
     public function write(mixed $data = false, bool $createIfNotExist = false, $flag = FILE_TEXT): bool
     {
-        if ($this->isValidDirectory($createIfNotExist)) {
+        if ($this->isValidDirectory($createIfNotExist) && $data != false) {
             return file_put_contents($this->path, $data, $flag) == false ? false : true;
         }
 
@@ -228,7 +312,7 @@ class FileManager implements IDirectory, IFile
                 if ($this->ignoreFiles($file)) {
                     $dirPath = $this->makeValidPath($path, $file);
                     if (is_dir($dirPath)) {
-                        $files[] = new FileManager($dirPath);
+                        $files[] = FileManager::new($dirPath);
                         if ($getSubFoldersFile) {
                             $files = array_merge(
                                 $files,
@@ -236,7 +320,7 @@ class FileManager implements IDirectory, IFile
                             );
                         }
                     } else {
-                        $files[] = new FileManager($this->makeValidPath($path, $file));
+                        $files[] = FileManager::new($this->makeValidPath($path, $file));
                     }
                 }
             }

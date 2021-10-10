@@ -15,17 +15,20 @@ class BuildMixer extends Mixer
         array $compactData = [],
         array $languageData = []
     ): string|false {
-        $childFile = new FileManager($path);
+        $childFile = FileManager::new("$resPath/$path" . BuildMixer::EXTENSION);
 
         if (!$childFile->isExist()) {
             return false;
         }
 
+
         // read all data using the [path] 
-        $childFile = $childFile->requireOnce();
+        $childFile = $childFile->requireOnce(true, true);
+
 
         // remove comments in the html documents
         $childFile = parent::commentTag($childFile);
+
 
         // check the extend tag, if the document haven't extend tag then remove the yields
         /** @var MixResult */
@@ -33,7 +36,7 @@ class BuildMixer extends Mixer
 
         if ($childExtend instanceof MixResult) {
 
-            $parentFile = new FileManager(
+            $parentFile = FileManager::new(
                 $resPath . DIRECTORY_SEPARATOR . str_replace(
                     '.',
                     DIRECTORY_SEPARATOR,
@@ -42,8 +45,7 @@ class BuildMixer extends Mixer
             );
 
             if ($parentFile->isExist()) {
-                $parentFile = $parentFile->requireOnce();
-
+                $parentFile = $parentFile->requireOnce(true, true);
                 $parentFile = self::renderYield(
                     parent::yield($parentFile),
                     parent::section($childExtend->getData()),
@@ -179,6 +181,8 @@ class BuildMixer extends Mixer
                     foreach ($var as $value) {
                         if (array_key_exists($value, $v)) {
                             $v = $v[$value];
+                        } else {
+                            $v = '<!-- not available -->';
                         }
                     }
 

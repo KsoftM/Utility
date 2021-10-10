@@ -9,9 +9,7 @@ class ApplyMigration
 {
     public static function applyMigration(string $migrationDir): void
     {
-        $f = new FileManager($migrationDir);
-
-        foreach ($f->getDirectoryFiles(true) as $value) {
+        foreach (FileManager::new($migrationDir)->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
                 $fileName = pathinfo($value->getPath(), PATHINFO_FILENAME);
                 $class = Make::getFileName($fileName);
@@ -31,9 +29,7 @@ class ApplyMigration
 
     public static function applyRoleBackMigration(string $migrationDir): void
     {
-        $f = new FileManager($migrationDir);
-
-        foreach ($f->getDirectoryFiles(true) as $value) {
+        foreach (FileManager::new($migrationDir)->getDirectoryFiles(true) as $value) {
             if ($value instanceof FileManager) {
                 $fileName = pathinfo($value->getPath(), PATHINFO_FILENAME);
                 $class = Make::getFileName($fileName);
