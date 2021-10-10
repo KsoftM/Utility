@@ -11,9 +11,9 @@ class ListData
     /**
      * Class constructor.
      */
-    public function __construct()
+    public function __construct(array $data = [])
     {
-        $this->args = [];
+        $this->args = $data;
     }
 
     public function clean(): void

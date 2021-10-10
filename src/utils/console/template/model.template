@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\app\http\controller;
+namespace ksoftm\app\http\models;
 
 use ksoftm\system\model\Model;
 

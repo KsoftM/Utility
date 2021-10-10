@@ -1,6 +1,6 @@
 <?php
 
-namespace ksoftm\app\http\controller;
+namespace ksoftm\app\http\controllers;
 
 use ksoftm\system\controller\Controller;
 
