@@ -15,7 +15,7 @@ class BuildMixer extends Mixer
         array $compactData = [],
         array $languageData = []
     ): string|false {
-        $childFile = FileManager::new("$resPath/$path" . BuildMixer::EXTENSION);
+        $childFile = FileManager::path("$resPath/$path" . BuildMixer::EXTENSION);
 
         if (!$childFile->isExist()) {
             return false;
@@ -36,7 +36,7 @@ class BuildMixer extends Mixer
 
         if ($childExtend instanceof MixResult) {
 
-            $parentFile = FileManager::new(
+            $parentFile = FileManager::path(
                 $resPath . DIRECTORY_SEPARATOR . str_replace(
                     '.',
                     DIRECTORY_SEPARATOR,

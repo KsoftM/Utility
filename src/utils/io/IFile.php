@@ -57,6 +57,8 @@ interface IFile
 
     /**
      * replace some text into new text using given path
+     * 
+     * future update is array base replacement
      *
      * @param string|array $search
      * @param string|array $data

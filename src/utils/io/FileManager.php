@@ -24,7 +24,7 @@ class FileManager implements IDirectory, IFile
     /**
      * Class constructor.
      */
-    protected function __construct(string $path, array $ignores = null)
+    public function __construct(string $path, array $ignores = null)
     {
         $this->path = $path;
         if (!empty($ignores)) {
@@ -32,9 +32,9 @@ class FileManager implements IDirectory, IFile
         }
     }
 
-    public static function new(string $path, array $ignores = null): FileManager
+    public static function path(string $path): FileManager
     {
-        return new FileManager($path, $ignores);
+        return new FileManager($path);
     }
 
     // get the path of the file
@@ -89,31 +89,56 @@ class FileManager implements IDirectory, IFile
         return false;
     }
 
-    public function getSize(): int
+    public function readLines(): array|false
     {
-        return filesize($this->path);
+        if ($this->isExist()) {
+            $stream = fopen($this->path, 'r');
+
+            while (($line = fgets($stream)) !== false) {
+                $d[] = $line;
+            }
+
+            fclose($stream);
+        }
+
+        return $d ?? false;
+    }
+
+    public function getSize(): int|false
+    {
+        $size = 0;
+
+        if ($this->isFile()) {
+            $size = filesize($this->getPath());
+        } else {
+            foreach ($this->getDirectoryFiles($this->getPath()) as $value) {
+                if ($value instanceof FileManager) {
+                    $size += $value->getSize();
+                }
+            }
+        }
+
+        return $size ?: false;
     }
 
     // read content using a path with stream
-    public function readStream(bool $use_include_path = false): string|false
+    public function readStream(): string|false
     {
-        $ctx = stream_context_create();
+        if ($this->isFile()) {
+            $ctx = stream_context_create();
 
-        if (false !== ($fRes = fopen($this->path, 'r', context: $ctx))) {
-            if ($this->getSize() > 1024 * 512) {
-                $readLength = 1024 * 512;
-            } else {
-                $readLength = $this->getSize();
+            if (false !== ($fRes = fopen($this->path, 'r', context: $ctx))) {
+                if ($this->getSize() > 1024 * 512) {
+                    $readLength = 1024 * 512;
+                } else {
+                    $readLength = $this->getSize();
+                }
+                while ((false !== ($d = stream_get_contents($fRes, $readLength))) && strlen($d) > 0) {
+                    echo $d;
+                }
+                fclose($fRes);
+                return '';
             }
-            while ((false !== ($d = stream_get_contents($fRes, $readLength))) && strlen($d) > 0) {
-                echo $d;
-            }
-            fclose($fRes);
-            return '';
-        }
-
-        if ($this->isExist()) {
-            return file_get_contents($this->path, $use_include_path);
         }
 
         return false;
@@ -208,10 +233,12 @@ class FileManager implements IDirectory, IFile
     public function replace(string|array $search, string|array $data, bool $writeToFile = false): string
     {
         if ($this->isExist()) {
-            $d = str_replace($search, $data, $this->read());
+            if (is_string($search) && is_string($data)) {
+                $d = str_replace($search, $data, $this->read());
 
-            if ($writeToFile) {
-                $this->write($d);
+                if ($writeToFile) {
+                    $this->write($d);
+                }
             }
         }
 
@@ -244,6 +271,16 @@ class FileManager implements IDirectory, IFile
         return file_exists($this->path);
     }
 
+    public function isFile(): bool
+    {
+        return is_file($this->path);
+    }
+
+    public function isDirectory(): bool
+    {
+        return is_dir($this->path);
+    }
+
     // check the path is valid
     public function isValidDirectory(bool $createIfNotExist = false): bool
     {
@@ -258,13 +295,13 @@ class FileManager implements IDirectory, IFile
 
     public function getDirectoryFiles(bool $getSubFoldersFile = false): array
     {
-        if (is_dir($this->path)) {
+        if ($this->isDirectory()) {
 
             $files = $this->openFilesInAFolder($this->path, $getSubFoldersFile);
 
             foreach ($files as $file) {
                 if ($file instanceof FileManager) {
-                    if (is_file($file->getPath())) {
+                    if ($file->isFile()) {
                         $output[] = $file;
                     }
                 }
@@ -275,7 +312,7 @@ class FileManager implements IDirectory, IFile
 
     public function getDirectories(bool $getSubFolders = false): array
     {
-        if (is_dir($this->path)) {
+        if ($this->isDirectory()) {
             return $this->openFilesInAFolder($this->path, $getSubFolders);
         }
         return [];
@@ -283,13 +320,13 @@ class FileManager implements IDirectory, IFile
 
     public function getDirectoriesOnly(bool $getSubFolders = false): array
     {
-        if (is_dir($this->path)) {
+        if ($this->isDirectory()) {
 
             $files = $this->openFilesInAFolder($this->path, $getSubFolders);
 
             foreach ($files as $file) {
                 if ($file instanceof FileManager) {
-                    if (is_dir($file->getPath())) {
+                    if ($file->isDirectory()) {
                         $output[] = $file;
                     }
                 }
@@ -312,7 +349,7 @@ class FileManager implements IDirectory, IFile
                 if ($this->ignoreFiles($file)) {
                     $dirPath = $this->makeValidPath($path, $file);
                     if (is_dir($dirPath)) {
-                        $files[] = FileManager::new($dirPath);
+                        $files[] = FileManager::path($dirPath);
                         if ($getSubFoldersFile) {
                             $files = array_merge(
                                 $files,
@@ -320,7 +357,7 @@ class FileManager implements IDirectory, IFile
                             );
                         }
                     } else {
-                        $files[] = FileManager::new($this->makeValidPath($path, $file));
+                        $files[] = FileManager::path($this->makeValidPath($path, $file));
                     }
                 }
             }

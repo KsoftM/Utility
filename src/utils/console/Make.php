@@ -4,6 +4,7 @@ namespace ksoftm\system\utils\console;
 
 use ksoftm\system\utils\database\ApplyMigration;
 use ksoftm\system\utils\database\Migration;
+use ksoftm\system\utils\EndeCorder;
 use ksoftm\system\utils\io\FileManager;
 use ksoftm\system\utils\validator\MegaValid;
 use ksoftm\system\utils\validator\MegRule;
@@ -16,6 +17,7 @@ class Make
     public const FUNC_MIGRATION = 'make:migration'; // -a
     public const FUNC_CONTROLLER = 'make:controller'; // -c
     public const FUNC_MODEL = 'make:model'; // -m
+    public const FUNC_ENV_KEY = 'new:key'; // -m
     public const FUNC_MIGRATE = 'migrate'; // [-r]
 
     public const FUNC_SHORT = [
@@ -45,6 +47,7 @@ class Make
             Make::FUNC_MIGRATION => '/migration',
             Make::FUNC_CONTROLLER => '/controller',
             Make::FUNC_MODEL => '/model',
+            Make::FUNC_ENV_KEY => '/.env',
         ]
     ): void {
         self::$PATH = $appPath;
@@ -64,9 +67,11 @@ class Make
         return false;
     }
 
-    public static function process($args, $root): void
-    {
-        echo PHP_EOL;
+    public static function process(
+        array $args,
+        string $root,
+        array $envKeyNames = ['APP_KEY', 'STORAGE_KEY']
+    ): void {
 
         if (!empty($args))
             $func = array_shift($args);
@@ -78,6 +83,7 @@ class Make
             self::FUNC_MIGRATION,
             self::FUNC_CONTROLLER,
             self::FUNC_MODEL,
+            self::FUNC_ENV_KEY,
             self::FUNC_MIGRATE
         ])) {
             Log::BlogLog("Invalid argument function passed.");
@@ -89,7 +95,7 @@ class Make
             $optional = $optional ?? [];
         }
 
-        log::block(function () use ($optional, $func, $root, $args) {
+        log::block(function () use ($optional, $func, $root, $args, $envKeyNames) {
             if (
                 $func == Make::FUNC_MIGRATION ||
                 (is_array($args) &&
@@ -100,6 +106,7 @@ class Make
                 else
                     echo "Invalid argument passed." . PHP_EOL;
             }
+
             if (
                 $func == Make::FUNC_CONTROLLER ||
                 (is_array($args) &&
@@ -110,6 +117,7 @@ class Make
                 else
                     echo "Invalid argument passed." . PHP_EOL;
             }
+
             if (
                 $func == Make::FUNC_MODEL ||
                 (is_array($args) &&
@@ -120,6 +128,11 @@ class Make
                 else
                     echo "Invalid argument passed." . PHP_EOL;
             }
+
+            if ($func == Make::FUNC_ENV_KEY) {
+                self::generateKey($root, $envKeyNames);
+            }
+
             if (
                 $func == Make::FUNC_MIGRATE ||
                 (is_array($args) &&
@@ -134,7 +147,6 @@ class Make
     {
         return MegaValid::validate([[$Name, MegRule::new()->userName()]]);
     }
-
 
     public static function migrate(string|false $root, array|string|false $optional): void
     {
@@ -180,6 +192,30 @@ class Make
         MakeTemplateFile::create($path, $className, $className, $templatePath, [
             '{className}' => $className
         ]);
+    }
+
+    public static function generateKey(string|false $root, array $keyNames): void
+    {
+        $path =  $root . self::$PATH[self::FUNC_ENV_KEY];
+        $path = FileManager::path($path);
+        $lines = $path->readLines();
+
+        foreach ($lines as $lineNo => $line) {
+            if ($line == PHP_EOL) {
+                $lines[$lineNo] = ''; 
+            }
+
+            foreach ($keyNames as $value) {
+                if (str_contains(strtoupper($line), strtoupper($value))) {
+                    $data = explode('=', $line, 2) + [null, null];
+                    $data[1] = EndeCorder::generateUniqueKey();
+                    $lines[$lineNo] = implode('=', $data);
+                }
+            }
+        }
+
+        $path->write(implode(PHP_EOL, $lines));
+        echo "Keys Generated successfully." . PHP_EOL;
     }
 
     public static function getFileName(string $fileName): ?string
