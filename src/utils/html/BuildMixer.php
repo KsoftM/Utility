@@ -21,14 +21,12 @@ class BuildMixer extends Mixer
             return false;
         }
 
-
         // read all data using the [path] 
         $childFile = $childFile->requireOnce(true, true);
 
 
         // remove comments in the html documents
         $childFile = parent::commentTag($childFile);
-
 
         // check the extend tag, if the document haven't extend tag then remove the yields
         /** @var MixResult */
@@ -52,16 +50,15 @@ class BuildMixer extends Mixer
                     $parentFile,
                     true
                 );
-
-                if (!empty($compactData)) {
+                if (!empty($compactData) && parent::var($parentFile) != false) {
                     $parentFile = self::renderVar(
-                        parent::var($parentFile),
+                        parent::var($parentFile) ?: [],
                         $parentFile,
                         $compactData
                     );
                 }
 
-                if (!empty($languageData)) {
+                if (!empty($languageData) && parent::lang($parentFile) != false) {
                     $lang = parent::lang($parentFile);
 
                     if (is_array($lang)) {
@@ -75,6 +72,8 @@ class BuildMixer extends Mixer
                 }
             }
             $childExtend = $parentFile;
+        } else {
+            //TODO
         }
 
         return $childExtend;
