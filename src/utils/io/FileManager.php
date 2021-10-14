@@ -32,11 +32,6 @@ class FileManager implements IDirectory, IFile
         }
     }
 
-    public static function path(string $path): FileManager
-    {
-        return new FileManager($path);
-    }
-
     // get the path of the file
     public function getPath(): string
     {
@@ -349,7 +344,7 @@ class FileManager implements IDirectory, IFile
                 if ($this->ignoreFiles($file)) {
                     $dirPath = $this->makeValidPath($path, $file);
                     if (is_dir($dirPath)) {
-                        $files[] = FileManager::path($dirPath);
+                        $files[] = new FileManager($dirPath);
                         if ($getSubFoldersFile) {
                             $files = array_merge(
                                 $files,
@@ -357,7 +352,7 @@ class FileManager implements IDirectory, IFile
                             );
                         }
                     } else {
-                        $files[] = FileManager::path($this->makeValidPath($path, $file));
+                        $files[] = new FileManager($this->makeValidPath($path, $file));
                     }
                 }
             }

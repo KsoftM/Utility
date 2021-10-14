@@ -197,14 +197,9 @@ class Make
     public static function generateKey(string|false $root, array $keyNames): void
     {
         $path =  $root . self::$PATH[self::FUNC_ENV_KEY];
-        $path = FileManager::path($path);
-        $lines = $path->readLines();
+        $path = new FileManager($path);
 
-        foreach ($lines as $lineNo => $line) {
-            if ($line == PHP_EOL) {
-                $lines[$lineNo] = ''; 
-            }
-
+        foreach ($lines = explode(PHP_EOL, $path->read()) as $lineNo => $line) {
             foreach ($keyNames as $value) {
                 if (str_contains(strtoupper($line), strtoupper($value))) {
                     $data = explode('=', $line, 2) + [null, null];
