@@ -23,16 +23,13 @@ class View
         self::$landDirectory = $landDirectory;
     }
 
-    public function view(string $path, array $data = []): bool
+    public function view(string $path, array $data = []): string
     {
-        // get the rout path
-        echo BuildMixer::build(
+        return BuildMixer::build(
             self::$resourcesPath,
             $path,
             self::$landDirectory,
             $data,
         );
-
-        return false;
     }
 }
