@@ -50,9 +50,14 @@ class BuildMixer extends Mixer
                     $parentFile,
                     true
                 );
-                if (!empty($compactData) && parent::var($parentFile) != false) {
-                    $parentFile = self::renderVar(
+                if (!empty($compactData)) {
+                    $vars = array_merge(
                         parent::var($parentFile) ?: [],
+                        parent::varString($parentFile) ?: [],
+                    );
+
+                    $parentFile = self::renderVar(
+                        $vars ?: [],
                         $parentFile,
                         $compactData
                     );
@@ -61,7 +66,7 @@ class BuildMixer extends Mixer
                 if (!empty($languageData) && parent::lang($parentFile) != false) {
                     $lang = parent::lang($parentFile);
 
-                    if (is_array($lang)) {
+                    if (is_array($lang) && $lang[1]) {
                         $parentFile = self::renderLang(
                             $lang[0],
                             $lang[1],
@@ -191,6 +196,7 @@ class BuildMixer extends Mixer
                         $parentFile
                     );
                 } else {
+
                     if (array_key_exists($variables->getSrc(), $languageData[$lang])) {
                         $parentFile = str_replace(
                             $variables->getTemplate(),

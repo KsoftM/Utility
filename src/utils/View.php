@@ -28,8 +28,8 @@ class View
         return BuildMixer::build(
             self::$resourcesPath,
             $path,
-            self::$landDirectory,
             $data,
+            self::$landDirectory,
         );
     }
 }

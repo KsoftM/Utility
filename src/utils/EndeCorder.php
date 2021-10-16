@@ -129,6 +129,7 @@ class EndeCorder
             0,
             $iv
         );
+        
         $hash = $this->hash($iv . $data);
 
         $iv = base64_encode($iv);
@@ -156,7 +157,7 @@ class EndeCorder
     public function decrypt(
         string $data,
         bool $serialization = false
-    ): string {
+    ): string|false {
         // separate the [encryptedData] and [iv] from base64 formatted encrypted data
         $json = json_decode(base64_decode($data), true);
 
@@ -269,7 +270,7 @@ class EndeCorder
         // decrypt the data and check it is a valid token
         $token = EndeCorder::new($uniqueKey)->decrypt($token);
 
-        if (!empty($token)) {
+        if (!empty($token) && $token != false) {
             // separate the name and time
             $token = (array) json_decode($token, true);
 
@@ -300,7 +301,7 @@ class EndeCorder
             return new TokenResult(false, 'Token is not valid!');
         }
 
-        return new TokenResult(false, 'Unknown errors founded!');
+        return new TokenResult(false, 'Unknown token errors founded!');
     }
 
     //<<-----X----->> token hashing and token validation <<-----X----->>//

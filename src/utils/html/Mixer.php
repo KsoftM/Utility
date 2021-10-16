@@ -2,6 +2,7 @@
 
 namespace ksoftm\system\utils\html;
 
+use ksoftm\system\utils\Cookie;
 
 abstract class Mixer
 {
@@ -151,17 +152,44 @@ abstract class Mixer
 
 
     /**
-     * Render var tag
+     * Render var string tag
      * 
      * @param string $data
      *
      * @return array [ 'template','name' ]
      */
+    protected static function varString(string $data): array|false
+    {
+        if (preg_match_all('/[\'" ]var::([^"]*[\s|\S|\w|\W]*)[\'"]/miU', $data, $varStrings)) {
+            [$t, $n] = $varStrings;
+
+            $varStrings = array_map(
+                function ($template, $name) {
+                    return new MixResult(
+                        template: $template,
+                        name: $name
+                    );
+                },
+                $t,
+                $n
+            );
+
+            return $varStrings;
+        }
+        return false;
+    }
+
+
+    /**
+     * Render var tag
+     * 
+     * @param string $data
+     *
+     * @return array [ 'template','src' ]
+     */
     protected static function lang(string $data): array|false
     {
-        $lang = filter_input(INPUT_COOKIE, 'lang');
-
-        $lang = ($lang != parse_url($_SERVER['HTTP_HOST'], PHP_URL_HOST)) ? $lang : 'en';
+        $lang = Cookie::make('lang')->get('lang');
 
         return [$lang, Mixer::singleTag('lang', $data, 'src')];
     }
