@@ -12,11 +12,11 @@
             "email": "ksoftmanagement@gmail.com"
         }
     ],
-    "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
             "ksoftm\\system\\": "./src"
         }
     },
-    "version": "0.1.15"
+    "minimum-stability": "dev",
+    "version": "0.1.16"
 }
