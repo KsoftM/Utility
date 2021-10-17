@@ -160,7 +160,7 @@ abstract class Mixer
      */
     protected static function varString(string $data): array|false
     {
-        if (preg_match_all('/[\'" ]var::([^"]*[\s|\S|\w|\W]*)[\'"]/miU', $data, $varStrings)) {
+        if (preg_match_all('/{{[ ]*var::([^}]*[\s|\S|\w|\W]*)[ ]*}}/miU', $data, $varStrings)) {
             [$t, $n] = $varStrings;
 
             $varStrings = array_map(

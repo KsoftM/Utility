@@ -13,7 +13,7 @@ class ListData
      */
     public function __construct(array $data = [])
     {
-        $this->args = $data;
+        $this->args = array_values($data);
     }
 
     public function clean(): void
@@ -53,9 +53,9 @@ class ListData
         return $d;
     }
 
-    public function have($value): bool
+    public function have($key): bool
     {
-        return in_array($value, $this->args);
+        return array_key_exists($key, $this->args);
     }
 
     public function get($key): mixed

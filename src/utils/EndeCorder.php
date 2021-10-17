@@ -317,7 +317,7 @@ class EndeCorder
      *
      * @return string
      */
-    public function HashedPassword(string $password, int $cost = 8): string
+    public static function HashedPassword(string $password, int $cost = 8): string
     {
         return password_hash($password, PASSWORD_DEFAULT, ['cost' => $cost]);
     }
@@ -330,7 +330,7 @@ class EndeCorder
      *
      * @return boolean
      */
-    public function VerifyHashedPassword(string $password, string $hash): bool
+    public static function VerifyHashedPassword(string $password, string $hash): bool
     {
         return password_verify($password, $hash);
     }

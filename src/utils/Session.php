@@ -8,85 +8,102 @@ namespace ksoftm\system\utils;
  */
 class Session
 {
-    protected const KEY_OF_SESSION = 'flash_session';
-    
     /**
      * Class constructor.
      */
     protected function __construct($timestamp, $path, $domain, $secure, $httpOnly)
     {
         if (session_status() != PHP_SESSION_ACTIVE) {
-            session_set_cookie_params($timestamp, $path, $domain, $secure, $httpOnly);
+            session_regenerate_id(true);
+            session_set_cookie_params(
+                $timestamp,
+                $path,
+                $domain ?: session_get_cookie_params()['domain'],
+                $secure,
+                $httpOnly
+            );
             session_start();
+            session_regenerate_id(true);
         }
     }
 
     public static function new(
         int $timestamp = 0,
         string $path = '/',
-        string $domain = 'localhost',
+        string $domain = null,
         bool $secure = true,
         bool $httpOnly = true
     ): Session {
         return new Session($timestamp, $path, $domain, $secure, $httpOnly);
     }
 
-    public static function flash(
-        string $id,
-        string $message,
-        int $timestamp = 0
-    ) {
-        Session::new($timestamp);
-        session_regenerate_id(true);
-        $_SESSION[Session::KEY_OF_SESSION][$id] = $message;
+    public function flash(string $id, string $message)
+    {
+        $_SESSION[$id] = $message;
+        session_commit();
     }
 
-    public static function have(string $id): bool
+    public function haveKey(string $key): bool
     {
-        if (!empty($_SESSION[Session::KEY_OF_SESSION][$id])) {
+        if (array_key_exists($key, $_SESSION)) {
             return true;
         }
         return false;
     }
 
-    public static function remove(string $id)
+    public function haveValue(mixed $value): bool
     {
-        if (self::have($id)) {
-            unset($_SESSION[Session::KEY_OF_SESSION][$id]);
+        if (in_array($value, $_SESSION)) {
+            return true;
         }
-        session_regenerate_id(true);
+        return false;
     }
 
-    public static function removeOnce(string $id)
+    protected function getKey(mixed $value): string|false
     {
-        if (self::have($id)) {
-            unset($_SESSION[Session::KEY_OF_SESSION][$id]);
-            sort($_SESSION[Session::KEY_OF_SESSION]);
-            session_regenerate_id(true);
+        foreach ($_SESSION as $k => $v) {
+            if ($v === $value) {
+                return $k;
+            }
         }
+        return false;
     }
 
-    public static function clean()
+    public function removeByKey(string $key)
+    {
+        if ($this->haveKey($key)) {
+            unset($_SESSION[$key]);
+        }
+        session_commit();
+    }
+
+    public function removeByValue(string $value)
+    {
+        if ($this->haveValue($value)) {
+            unset($_SESSION[$this->getKey($value)]);
+        }
+        session_commit();
+    }
+
+    public function clean()
     {
         session_destroy();
-        session_regenerate_id(true);
     }
 
-    public static function get(string $id, string $default = ''): mixed
+    public function getByKey(string $key, string $default = ''): mixed
     {
-        Session::new();
-        if (self::have($id)) {
-            $d = $_SESSION[Session::KEY_OF_SESSION][$id];
+        if ($this->haveKey($key)) {
+            $d = $_SESSION[$key];
         }
+        session_commit();
         session_regenerate_id(true);
         return $d ?? $default;
     }
 
-    public static function getOnce(string $id, string $default = ''): mixed
+    public function getOnceByKey(string $key, string $default = ''): mixed
     {
-        Session::new();
-        $d = Session::get($id, $default);
-        self::remove($id);
+        $d = $this->getByKey($key, $default);
+        $this->removeByKey($key);
         return $d ?? $default;
     }
 }

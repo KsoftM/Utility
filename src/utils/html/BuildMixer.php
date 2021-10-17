@@ -15,6 +15,10 @@ class BuildMixer extends Mixer
         array $compactData = [],
         array $languageData = []
     ): string|false {
+        if (strpos($path, '.')) {
+            $path = str_replace('.', '/', $path);
+        }
+
         $childFile = new FileManager("$resPath/$path" . BuildMixer::EXTENSION);
 
         if (!$childFile->isExist()) {
@@ -141,7 +145,7 @@ class BuildMixer extends Mixer
                         if (array_key_exists($value, !is_array($v) ? [] : $v)) {
                             $v = $v[$value];
                         } else {
-                            $v = '<!-- not available -->';
+                            $v = '';
                         }
                     }
                     $parentFile = str_replace(
