@@ -60,7 +60,7 @@ class MegRule
     /**
      * Class constructor.
      */
-    public function __construct(string $fieldName)
+    public function __construct(string $fieldName = null)
     {
         // $this->fieldName = strtolower($fieldName);
         $this->fieldName = ucfirst($fieldName);
