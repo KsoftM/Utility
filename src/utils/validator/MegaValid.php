@@ -187,7 +187,7 @@ class MegaValid
                         throw new Exception("The username rule must be work with an string value.");
                     }
 
-                    $reg = preg_match('/^[^.-0-9][a-zA-Z0-9_-]*$/', $data) == false ? false : true;
+                    $reg = preg_match('/^[^.-0-9][a-zA-Z0-9_]*$/', $data) == false ? false : true;
 
                     $output = ($reg);
 
