@@ -53,14 +53,19 @@ class ListData
         return $d;
     }
 
-    public function have($key): bool
+    public function have($data): bool
+    {
+        return in_array($data, $this->args);
+    }
+
+    public function haveKey($key): bool
     {
         return array_key_exists($key, $this->args);
     }
 
     public function get($key): mixed
     {
-        if (!is_null($key) && $this->have($key)) {
+        if (!is_null($key) && $this->havekey($key)) {
             return $this->args[$key];
         }
         return false;
