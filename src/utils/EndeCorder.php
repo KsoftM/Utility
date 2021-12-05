@@ -129,7 +129,7 @@ class EndeCorder
             0,
             $iv
         );
-        
+
         $hash = $this->hash($iv . $data);
 
         $iv = base64_encode($iv);
@@ -267,8 +267,13 @@ class EndeCorder
         string $token,
         string $uniqueKey
     ): TokenResult {
-        // decrypt the data and check it is a valid token
-        $token = EndeCorder::new($uniqueKey)->decrypt($token);
+
+        try {
+            // decrypt the data and check it is a valid token
+            $token = EndeCorder::new($uniqueKey)->decrypt($token);
+        } catch (\Throwable $th) {
+            return new TokenResult(false, 'Token is not valid!');
+        }
 
         if (!empty($token) && $token != false) {
             // separate the name and time

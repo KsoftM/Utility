@@ -94,9 +94,8 @@ class Session
     {
         if ($this->haveKey($key)) {
             $d = $_SESSION[$key];
+            session_regenerate_id(true);
         }
-        session_commit();
-        session_regenerate_id(true);
         return $d ?? $default;
     }
 

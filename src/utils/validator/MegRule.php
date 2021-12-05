@@ -63,7 +63,7 @@ class MegRule
     public function __construct(string $fieldName = null)
     {
         // $this->fieldName = strtolower($fieldName);
-        $this->fieldName = ucfirst($fieldName);
+        $this->fieldName = $fieldName;
         $this->nullable()->string();
     }
 
@@ -86,6 +86,11 @@ class MegRule
     }
 
     public function getField(): string|false
+    {
+        return ucfirst($this->fieldName) ?? false;
+    }
+
+    public function getRawField(): string|false
     {
         return $this->fieldName ?? false;
     }

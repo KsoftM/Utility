@@ -2,6 +2,8 @@
 
 namespace ksoftm\system\utils;
 
+use ksoftm\system\kernel\Request;
+
 class Cookie
 {
     protected string $encryptKey;
@@ -97,9 +99,9 @@ class Cookie
     /**
      * start the cookie
      *
-     * @return Cookie|false
+     * @return Cookie
      */
-    public function start(): Cookie|false
+    public function start(bool $restart = false): Cookie
     {
         setcookie(
             $this->name,
@@ -110,13 +112,20 @@ class Cookie
             $this->secure,
             $this->httpOnly
         );
+
+        if ($restart) {
+            $url = filter_input(INPUT_SERVER, 'REQUEST_URI');
+            header('Location: ' . $url);
+            exit;
+        }
         return $this;
     }
 
     public function startWidthTime(float $timestamp = 3600): Cookie
     {
         $this->timestamp = $timestamp;
-        return $this->start();
+        $this->start();
+        return $this;
     }
 
     /**
