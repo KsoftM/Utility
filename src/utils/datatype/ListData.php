@@ -23,7 +23,7 @@ class ListData
 
     public function add($value): bool
     {
-        if (!is_null($value) && !$this->have($value)) {
+        if (!is_null($value)) {
             $this->args[] = $value;
             return true;
         }
@@ -65,9 +65,19 @@ class ListData
 
     public function get($key): mixed
     {
-        if (!is_null($key) && $this->havekey($key)) {
+        if (!is_null($key) && $this->haveKey($key)) {
             return $this->args[$key];
         }
         return false;
+    }
+
+    public function __get(string $data)
+    {
+        return $this->get($data);
+    }
+
+    public function __set(string $key, $value)
+    {
+        $this->add($key, $value);
     }
 }

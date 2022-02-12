@@ -23,7 +23,16 @@ class Dictionary
 
     public function add($key, $value): bool
     {
-        if (!is_null($key) && !$this->haveKey($key)) {
+        if (!is_null($key) && !is_null($value) && !$this->haveKey($key)) {
+            $this->args[$key] = $value;
+            return true;
+        }
+        return false;
+    }
+
+    public function update($key, $value): bool
+    {
+        if (!is_null($key) && !is_null($value) && $this->haveKey($key)) {
             $this->args[$key] = $value;
             return true;
         }
@@ -75,7 +84,7 @@ class Dictionary
     public function getEach(callable $callback): mixed
     {
         foreach ($this->args as $key => $value) {
-            $d[] = call_user_func($callback, $value);
+            $d[] = call_user_func($callback, $key, $value);
         }
 
         return $d ??  false;
@@ -89,5 +98,16 @@ class Dictionary
     public function haveValue($value): bool
     {
         return in_array($value, $this->args);
+    }
+
+    public function __get(string $data)
+    {
+        return $this->getValue($data);
+    }
+
+    public function __set(string $key, $value)
+    {
+        $this->add($key, $value);
+        $this->update($key, $value);
     }
 }
