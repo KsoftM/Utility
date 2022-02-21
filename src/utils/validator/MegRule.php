@@ -36,7 +36,7 @@ class MegRule
     public const YEAR_TYPE = 302;
     public const DATETIME_TYPE = 303;
     public const TIMESTAMP_TYPE = 304;
-    public const MATCH_TYPE = 305;
+    public const CHECK_TYPE = 305;
     public const UNSIGNED_TYPE = 306;
     public const MIN_TYPE = 307;
     public const MAX_TYPE = 308;
@@ -282,10 +282,10 @@ class MegRule
         return $this;
     }
 
-    public function match(string $name, mixed $propertyName): MegRule
+    public function check(string $name, mixed $propertyName): MegRule
     {
-        $this->args[MegRule::DEPEND_ARGS_TYPE][MegRule::MATCH_TYPE] =
-            $this->args[MegRule::DEPEND_ARGS_TYPE][MegRule::MATCH_TYPE]
+        $this->args[MegRule::DEPEND_ARGS_TYPE][MegRule::CHECK_TYPE] =
+            $this->args[MegRule::DEPEND_ARGS_TYPE][MegRule::CHECK_TYPE]
             ?? [$name, $propertyName];
 
         return $this;

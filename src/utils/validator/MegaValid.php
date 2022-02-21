@@ -220,7 +220,7 @@ class MegaValid
                     if ($output == false) {
                         $errors[MegRule::DATETIME_TYPE] = "$field field must be in a valid format.";
                     }
-                } elseif ($key == MegRule::MATCH_TYPE) {
+                } elseif ($key == MegRule::CHECK_TYPE) {
 
                     if (is_array($value)) {
                         $prop = $value[0] ?? false;
@@ -230,7 +230,7 @@ class MegaValid
                     $output = ($value === $data);
 
                     if ($output == false) {
-                        $errors[MegRule::MATCH_TYPE] = ($prop == false)
+                        $errors[MegRule::CHECK_TYPE] = ($prop == false)
                             ? "The fields must be match."
                             : "The $prop field must be match.";
                     }
