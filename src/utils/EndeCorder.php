@@ -72,7 +72,7 @@ class EndeCorder
      */
     public static function checkValidCipher(string $key, string $cipher): bool
     {
-        $bitCount = mb_strlen(base64_decode($key), '8bit');
+        $bitCount = strlen(base64_decode($key));
 
         return ($bitCount >= EndeCorder::MAX_LENGTH_AES_128_CTR &&
             $cipher === EndeCorder::CIPHER_AES_128_CTR) ||

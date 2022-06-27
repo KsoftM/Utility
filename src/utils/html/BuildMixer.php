@@ -156,7 +156,7 @@ class BuildMixer extends Mixer
                 }
                 if (
                     array_key_exists($variables->getName(), $compactData) &&
-                    filter_var($compactData[$variables->getName()], FILTER_SANITIZE_STRING)
+                    filter_var($compactData[$variables->getName()], FILTER_DEFAULT)
                 ) {
                     $parentFile = str_replace(
                         $variables->getTemplate(),
